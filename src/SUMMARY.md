@@ -16,7 +16,7 @@
   - [SQLite WAL Mode](ch10_sqlite.md)
   - [InnoDB Redo/Undo](ch11_innodb.md)
   - [RocksDB WAL](ch12_rocksdb.md)
-  - [LMDB & Embedded Systems](ch13_lmdb.md)
+  - [LMDB and Embedded Systems](ch13_lmdb.md)
 - [Part IV: WAL in Distributed Systems](part4_distributed.md)
   - [Replication & Consensus](ch14_raft.md)
   - [Distributed Databases](ch15_distributed_dbs.md)
