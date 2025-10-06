@@ -1,20 +1,27 @@
-name: Deploy mdBook site
+name: Build and Deploy mdBook
+permissions:
+  contents: write  # Allow Actions to push site content
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install mdBook
         run: cargo install mdbook
-      - name: Build book
+
+      - name: Build mdBook
         run: mdbook build
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # default token works for public repos
           publish_dir: ./book
-          publish_branch: gh-pages
+          publish_branch: gh-pages          # this is the branch Actions will create/use
+          force_orphan: true                 # ensures a clean deploy
