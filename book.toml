@@ -6,3 +6,6 @@ title = "The WAL Book"
 
 [preprocessor.mermaid]
 command = "mdbook-mermaid"
+
+[output.html]
+theme = "theme"
