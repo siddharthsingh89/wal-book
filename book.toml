@@ -3,3 +3,6 @@ authors = ["Siddharth Singh"]
 language = "en"
 src = "src"
 title = "The WAL Book"
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
