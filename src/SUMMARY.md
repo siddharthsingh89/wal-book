@@ -7,6 +7,7 @@
   - [Chapter 3 : WAL Architecture and Components](ch3_architecture.md)
 - [Part II: Implementing WAL](part2_implementation.md)
   - [Chapter 4 : Designing a Minimal WAL](ch4_design.md)
+  - [Chapter 4.1 : Designing a Minimal WAL in C#](ch4_design_csharp.md)
   - [Chapter 5 : Crash Recovery](ch5_recovery.md)
   - [Chapter 6 : Checkpointing and Log Compaction](ch6_checkpoint.md)
   - [Chapter 7 : Concurrency and WAL](ch7_concurrency.md)

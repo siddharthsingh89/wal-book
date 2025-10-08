@@ -9,7 +9,8 @@ Here’s what lies ahead:
 
 * **Chapter 4 – Designing a Minimal WAL:**
   We start small-designing a simple, append-only WAL that records changes safely before applying them. You’ll learn the key data structures, file formats, and write-order guarantees needed for correctness.
-
+  Based on a request from a reader, there is another version of this chapter with code snippets in C#.
+  
 * **Chapter 5 – Crash Recovery:**
   Systems fail. This chapter shows how to bring them back to a consistent state by replaying log entries, ensuring durability and atomicity even after unexpected crashes.
 
