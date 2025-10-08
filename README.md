@@ -5,6 +5,7 @@
 This book explains the **core concepts**, **architecture**, and **implementation techniques** of WAL with clear diagrams, examples, and code snippets (in Rust and pseudocode).  
 It is built using [mdBook](https://github.com/rust-lang/mdBook).
 
+View it [here](https://siddharthsingh89.github.io/wal-book/)
 ---
 
 ##  Prerequisites
