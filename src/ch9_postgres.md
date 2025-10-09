@@ -251,5 +251,3 @@ For PostgreSQL, the guiding philosophy is clarity over cleverness-every change f
 
 * [PostgreSQL WAL Internals (official)](https://www.postgresql.org/docs/current/wal-internals.html)
 * [PostgreSQL Source: `xlog.c`](https://github.com/postgres/postgres/blob/master/src/backend/access/transam/xlog.c)
-* [A Deep Dive into PostgreSQL’s Write-Ahead Logging - Brandur Leach](https://brandur.org/postgres-wal)
-* [Understanding Checkpoints in PostgreSQL](https://www.postgresql.org/docs/current/checkpoints.html)
