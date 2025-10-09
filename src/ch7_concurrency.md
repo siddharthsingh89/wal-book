@@ -521,5 +521,3 @@ Concurrency is the "real world" requirement for any WAL-backed storage engine. T
 * If correctness and strong durability are critical, prefer synchronous commits and conservative flushes.
 * If throughput with acceptable bounded durability is acceptable, use group commit or periodic flush.
 * Mirror patterns used by mature systems (group commit in Postgres, InnoDB's doublewrite and flush controls, RocksDB's WAL + memtable flushing) to avoid common pitfalls.
-
-With the C# examples above you can prototype safe WAL writers, benchmark them, and evolve toward the durability/throughput mix you need.
