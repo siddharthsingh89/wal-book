@@ -77,7 +77,7 @@ Example:
 
 | Shard | Data Range       | WAL File        | Leader Node |
 | ----- | ---------------- | --------------- | ----------- |
-| 1     | keys [0-1000)     wal_shard_1.log | Node A       |
+| 1     | keys [0-1000)    | wal_shard_1.log | Node A      |
 | 2     | keys [1000-2000) | wal_shard_2.log | Node B      |
 | 3     | keys [2000-3000) | wal_shard_3.log | Node C      |
 
