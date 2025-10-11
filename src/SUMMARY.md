@@ -26,3 +26,4 @@
   - [Debugging & Visualization](ch17_debugging.md)
   - [Modern Storage Engines](ch18_modern_engines.md)
 - [Appendices](appendices.md)
+- [Author's note](author_note.md)
