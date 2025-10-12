@@ -1,0 +1,510 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Replication &amp; Consensus</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="chapter-14-replication--consensus"><a class="header" href="#chapter-14-replication--consensus">Chapter 14: Replication &amp; Consensus</a></h2>
+<h3 id="introduction"><a class="header" href="#introduction"><strong>Introduction</strong></a></h3>
+<p>When databases grow beyond a single machine, <strong>durability and correctness</strong> become a team sport.
+A single crash can be recovered using WAL, but what happens when your database runs across <strong>multiple machines</strong>?</p>
+<p>How do all replicas agree on <em>which transactions were committed</em>?
+How do we ensure that a follower node doesn’t replay half-written data?
+And how do we make sure that every replica applies the same log entries in the same order?</p>
+<p>These questions are answered by the combination of <strong>Write-Ahead Logs (WAL)</strong> and <strong>Consensus Protocols</strong> like <strong>Raft</strong>, <strong>Paxos</strong>, or <strong>ZAB</strong> (used by ZooKeeper).</p>
+<p>Replication + Consensus = <em>Durability &amp; Availability across machines</em>.</p>
+<hr />
+<h2 id="1-the-journey-from-single-node-to-distributed-wal"><a class="header" href="#1-the-journey-from-single-node-to-distributed-wal"><strong>1. The Journey from Single Node to Distributed WAL</strong></a></h2>
+<p>Let’s recall how WAL works in a single node:</p>
+<pre><code>+--------------------+
+|  User Transaction  |
++--------------------+
+          |
+          v
+  +------------------+
+  | Write to WAL Log |   (sequential disk write)
+  +------------------+
+          |
+          v
+  +------------------+
+  | Update Data Page |
+  +------------------+
+</code></pre>
+<p>When power fails, we recover from WAL by replaying committed transactions.</p>
+<p>But in a <strong>distributed setup</strong>, we want <em>multiple replicas</em> to have the same log - so that if one node dies, another can take over.</p>
+<p>This requires <strong>replication of WAL entries</strong>.</p>
+<hr />
+<h2 id="2-replicating-the-wal"><a class="header" href="#2-replicating-the-wal"><strong>2. Replicating the WAL</strong></a></h2>
+<p>In distributed databases like <strong>PostgreSQL</strong>, <strong>MongoDB</strong>, <strong>CockroachDB</strong>, and <strong>Etcd</strong>, replication happens at the <strong>log level</strong>.</p>
+<p>Instead of sending the final data pages, the system sends <strong>WAL entries</strong> - the smallest, most atomic units of change.</p>
+<p>This makes replication:</p>
+<ul>
+<li><strong>Lightweight</strong> (logs are small)</li>
+<li><strong>Deterministic</strong> (everyone replays the same sequence)</li>
+<li><strong>Efficient</strong> (sequential write + sequential replay)</li>
+</ul>
+<h3 id="example-log-replication-timeline"><a class="header" href="#example-log-replication-timeline">Example: Log Replication Timeline</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Time</th><th>Leader (Node A)</th><th>Follower (Node B)</th></tr></thead><tbody>
+<tr><td>T1</td><td>Receives <code>UPDATE x=5</code></td><td></td></tr>
+<tr><td>T2</td><td>Appends to WAL: <code>log[1] = "x=5"</code></td><td></td></tr>
+<tr><td>T3</td><td>Sends log[1] to follower</td><td>Receives log[1]</td></tr>
+<tr><td>T4</td><td>Both mark log[1] as committed</td><td>Replays to data</td></tr>
+</tbody></table>
+</div>
+<p>After this, both nodes have:</p>
+<pre><code>WAL = [log1: x=5]
+Data = x=5
+</code></pre>
+<p>Thus, replication ensures <em>consistency</em> and <em>fault tolerance</em>.</p>
+<hr />
+<h2 id="3-synchronous-vs-asynchronous-replication"><a class="header" href="#3-synchronous-vs-asynchronous-replication"><strong>3. Synchronous vs Asynchronous Replication</strong></a></h2>
+<p>Replication can occur in different modes:</p>
+<div class="table-wrapper"><table><thead><tr><th>Type</th><th>Description</th><th>Tradeoff</th></tr></thead><tbody>
+<tr><td><strong>Synchronous</strong></td><td>Leader waits until all replicas confirm write</td><td>Safer but slower</td></tr>
+<tr><td><strong>Asynchronous</strong></td><td>Leader commits locally, sends later</td><td>Faster but may lose data if leader crashes</td></tr>
+<tr><td><strong>Semi-sync (Hybrid)</strong></td><td>Wait for at least one replica</td><td>Middle ground</td></tr>
+</tbody></table>
+</div>
+<p>Example in PostgreSQL:</p>
+<pre><code class="language-sql">synchronous_commit = on
+</code></pre>
+<p>ensures the transaction waits until at least one standby writes WAL to disk.</p>
+<hr />
+<h3 id="diagram-wal-replication-modes"><a class="header" href="#diagram-wal-replication-modes"><strong>Diagram: WAL Replication Modes</strong></a></h3>
+<pre><code>User ----&gt; Leader WAL ----&gt; Follower WAL
+            |                    |
+         Commit wait         Commit async
+</code></pre>
+<p>Synchronous = strong consistency
+Asynchronous = eventual consistency</p>
+<hr />
+<h2 id="4-the-need-for-consensus"><a class="header" href="#4-the-need-for-consensus"><strong>4. The Need for Consensus</strong></a></h2>
+<p>Simple replication works well - until the leader crashes.</p>
+<p>Imagine three nodes: A, B, C.
+A is the leader. It appends a new WAL entry (<code>log[5]</code>), sends it to B and C, but crashes before committing.</p>
+<p>Now who decides if <code>log[5]</code> is valid?</p>
+<p>If B and C disagree, we risk <strong>split-brain</strong> - where two leaders think they are correct.</p>
+<p>That’s where <strong>consensus protocols</strong> like <strong>Raft</strong> and <strong>Paxos</strong> come in.</p>
+<p>They ensure:</p>
+<ol>
+<li>All nodes agree on the same WAL order.</li>
+<li>No committed log entry is lost.</li>
+<li>Only one leader can exist at a time.</li>
+</ol>
+<hr />
+<h2 id="5-wal--raft-a-simple-analogy"><a class="header" href="#5-wal--raft-a-simple-analogy"><strong>5. WAL + Raft: A Simple Analogy</strong></a></h2>
+<p>Think of Raft as a <strong>distributed WAL controller</strong>.</p>
+<p>Each Raft node maintains a <strong>replicated log</strong>.
+Every client command becomes a <strong>log entry</strong>, replicated to all nodes before it’s committed.</p>
+<pre><code>Client Command -&gt; Log Entry -&gt; Append to WAL on all replicas -&gt; Commit
+</code></pre>
+<h3 id="raft-log-example"><a class="header" href="#raft-log-example"><strong>Raft Log Example</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Index</th><th>Term</th><th>Command</th><th>State</th></tr></thead><tbody>
+<tr><td>1</td><td>1</td><td><code>SET x=5</code></td><td>Committed</td></tr>
+<tr><td>2</td><td>1</td><td><code>SET y=10</code></td><td>Committed</td></tr>
+<tr><td>3</td><td>2</td><td><code>DELETE y</code></td><td>Pending</td></tr>
+</tbody></table>
+</div>
+<p>Each node’s WAL might look like:</p>
+<pre><code>Node A WAL: [1, 2, 3]
+Node B WAL: [1, 2]
+Node C WAL: [1, 2, 3]
+</code></pre>
+<p>Once a majority (2/3) of nodes acknowledge entry 3 → it’s <strong>committed</strong>.</p>
+<p>Then all replicas replay it in order.</p>
+<hr />
+<h3 id="diagram-raft-commit-flow"><a class="header" href="#diagram-raft-commit-flow"><strong>Diagram: Raft Commit Flow</strong></a></h3>
+<pre><code>Client
+   |
+   v
++----------+
+|  Leader  |---- AppendEntries ---&gt; [Follower 1]
+| (WAL Log)|---- AppendEntries ---&gt; [Follower 2]
++----------+
+       |
+       +--&gt; Commit if majority ack
+</code></pre>
+<hr />
+<h2 id="6-log-matching--term-rules"><a class="header" href="#6-log-matching--term-rules"><strong>6. Log Matching &amp; Term Rules</strong></a></h2>
+<p>Raft ensures safety using <strong>two key rules</strong>:</p>
+<ol>
+<li>
+<p><strong>Log Matching Property</strong>
+If two logs have the same index and term, their entire prefix is identical.
+→ Prevents divergent history.</p>
+</li>
+<li>
+<p><strong>Leader Completeness Property</strong>
+A newly elected leader must contain all committed entries.</p>
+</li>
+</ol>
+<p>These rules ensure that WALs never “fork” or contain partial transactions.</p>
+<hr />
+<h2 id="7-leader-election"><a class="header" href="#7-leader-election"><strong>7. Leader Election</strong></a></h2>
+<p>When a node crashes, others detect a timeout and hold an <strong>election</strong>.</p>
+<p>Each node:</p>
+<ol>
+<li>Increments its term</li>
+<li>Votes for itself</li>
+<li>Requests votes from others</li>
+<li>First to reach majority becomes the <strong>leader</strong></li>
+</ol>
+<p>Once a leader is elected, it resumes WAL replication from the last known index.</p>
+<h3 id="diagram-election-timeline"><a class="header" href="#diagram-election-timeline"><strong>Diagram: Election Timeline</strong></a></h3>
+<pre><code>[A] --crash--&gt; [B,C] start election
+[B] term=3 votes=2 --&gt; new leader
+[C] term=3 follows B
+</code></pre>
+<p>Then replication continues from <code>lastLogIndex</code>.</p>
+<hr />
+<h2 id="8-checkpoints-and-snapshots-in-distributed-wal"><a class="header" href="#8-checkpoints-and-snapshots-in-distributed-wal"><strong>8. Checkpoints and Snapshots in Distributed WAL</strong></a></h2>
+<p>As the WAL grows, keeping all entries forever is expensive.</p>
+<p>To solve this, systems periodically take <strong>snapshots</strong> or <strong>checkpoints</strong>, truncating old logs that are already applied everywhere.</p>
+<p>Example:</p>
+<pre><code>WAL: [1..10000]
+Snapshot: State after log 10000
+Truncate logs &lt;= 10000
+</code></pre>
+<p>On recovery, a node loads the latest snapshot, then replays newer WAL entries.</p>
+<hr />
+<h2 id="9-how-consensus-prevents-split-brain"><a class="header" href="#9-how-consensus-prevents-split-brain"><strong>9. How Consensus Prevents Split-Brain</strong></a></h2>
+<p>Let’s revisit the crash scenario:</p>
+<ul>
+<li>Node A (leader) had WAL up to entry #5</li>
+<li>Node B, C had entries up to #4</li>
+</ul>
+<p>A crashes before committing #5.</p>
+<p>Without consensus, B might become leader and commit different #5.
+Now, A and B have divergent WALs → <strong>split-brain</strong>.</p>
+<p>Raft prevents this:</p>
+<ul>
+<li>New leader election requires <strong>majority agreement</strong>.</li>
+<li>Majority never acknowledged #5 → new leader’s log excludes it.</li>
+<li>When A rejoins, it <strong>rolls back</strong> entry #5 to match majority.</li>
+</ul>
+<p>Thus, WALs converge to a single, agreed-upon sequence.</p>
+<hr />
+<h2 id="10-real-world-implementations"><a class="header" href="#10-real-world-implementations"><strong>10. Real-World Implementations</strong></a></h2>
+<div class="table-wrapper"><table><thead><tr><th>System</th><th>Consensus</th><th>WAL Layer</th><th>Notes</th></tr></thead><tbody>
+<tr><td><strong>Etcd</strong></td><td>Raft</td><td>BoltDB WAL</td><td>Key-value store for k8s</td></tr>
+<tr><td><strong>CockroachDB</strong></td><td>Raft</td><td>RocksDB WAL</td><td>Distributed SQL database</td></tr>
+<tr><td><strong>TiDB</strong></td><td>Raft</td><td>Custom WAL</td><td>Multi-raft per region</td></tr>
+<tr><td><strong>PostgreSQL</strong></td><td>None (primary/standby)</td><td>Physical WAL shipping</td><td>Optional synchronous mode</td></tr>
+<tr><td><strong>MongoDB</strong></td><td>Custom (Raft-like)</td><td>Oplog (logical WAL)</td><td>High availability</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="example-postgresql-streaming-replication"><a class="header" href="#example-postgresql-streaming-replication">Example: PostgreSQL Streaming Replication</a></h3>
+<p>Postgres replicates <em>WAL segments</em> over TCP using a background process (<code>walsender</code> → <code>walreceiver</code>).</p>
+<pre><code>Primary (WAL Writer) ---&gt; Standby (WAL Receiver)
+      write WAL                store and replay
+</code></pre>
+<p>Command to check replication status:</p>
+<pre><code class="language-sql">SELECT * FROM pg_stat_replication;
+</code></pre>
+<p>This form of replication is <em>physical</em> - byte-for-byte log shipping.
+Systems like MongoDB use <em>logical replication</em> (replicating operations instead).</p>
+<hr />
+<h2 id="11-summary-wal-as-the-foundation-of-distributed-consensus"><a class="header" href="#11-summary-wal-as-the-foundation-of-distributed-consensus"><strong>11. Summary: WAL as the Foundation of Distributed Consensus</strong></a></h2>
+<p>At this point, we can summarize the key takeaways:</p>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>Description</th></tr></thead><tbody>
+<tr><td>WAL</td><td>Source of truth for state changes</td></tr>
+<tr><td>Replication</td><td>Copies WAL to other nodes</td></tr>
+<tr><td>Consensus</td><td>Ensures all replicas agree on WAL order</td></tr>
+<tr><td>Checkpoint</td><td>Compact form of stable state</td></tr>
+<tr><td>Recovery</td><td>Reapply committed WAL entries after crash</td></tr>
+</tbody></table>
+</div>
+<p>Together, these ensure that no matter which node fails, the system can <strong>recover</strong>, <strong>agree</strong>, and <strong>continue</strong>.</p>
+<hr />
+<h2 id="12-mini-example-a-raft-like-wal-simulation"><a class="header" href="#12-mini-example-a-raft-like-wal-simulation"><strong>12. Mini Example: A Raft-Like WAL Simulation</strong></a></h2>
+<p>Let’s simulate a mini system in pseudocode:</p>
+<pre><code class="language-python">class Node:
+    def __init__(self):
+        self.log = []
+        self.commit_index = 0
+
+    def append(self, entry):
+        self.log.append(entry)
+
+    def replicate_to(self, peers):
+        for p in peers:
+            p.log = self.log.copy()
+
+    def commit(self):
+        self.commit_index = len(self.log)
+
+# Leader appends and replicates
+leader = Node()
+f1, f2 = Node(), Node()
+
+leader.append("SET x=10")
+leader.replicate_to([f1, f2])
+leader.commit()
+
+print(f1.log, f2.log)
+</code></pre>
+<p>Output:</p>
+<pre><code>['SET x=10'] ['SET x=10']
+</code></pre>
+<p>This is the essence of replication - distributed agreement on log entries.</p>
+<hr />
+<h2 id="13-visual-recap-wal--consensus--reliability"><a class="header" href="#13-visual-recap-wal--consensus--reliability"><strong>13. Visual Recap: WAL + Consensus = Reliability</strong></a></h2>
+<pre><code>[ Client ]
+    |
+    v
+[ Leader ]
+   |
+   +--&gt; Append to WAL
+   +--&gt; Replicate to followers
+   +--&gt; Wait for majority ACK
+   |
+   +--&gt; Commit
+   |
+   +--&gt; Apply to state machine
+</code></pre>
+<p>When any node crashes:</p>
+<ul>
+<li>WAL ensures <em>no local data is lost</em></li>
+<li>Consensus ensures <em>no global order is broken</em></li>
+</ul>
+<hr />
+<h2 id="14-closing-thoughts"><a class="header" href="#14-closing-thoughts"><strong>14. Closing Thoughts</strong></a></h2>
+<p>In single-node databases, WAL protects against <strong>crashes</strong>.
+In distributed systems, it protects against <strong>disagreement</strong>.</p>
+<p>Replication spreads the WAL.
+Consensus ensures <em>everyone sees it the same way</em>.</p>
+<p>In the next chapter, we’ll explore how distributed databases like <strong>CockroachDB</strong>, <strong>Spanner</strong>, and <strong>Etcd</strong> extend these ideas - combining WAL, replication, and consensus into <strong>globally consistent transactional systems</strong>.</p>
+<hr />
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="part4_distributed.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch15_distributed_dbs.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="part4_distributed.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch15_distributed_dbs.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 6 : Checkpointing and Log Compaction</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chapter-6-checkpointing-and-log-compaction"><a class="header" href="#chapter-6-checkpointing-and-log-compaction">Chapter 6: Checkpointing and Log Compaction</a></h1>
+<p>By now, you’ve built a database that can <strong>survive crashes</strong> using a Write-Ahead Log and <strong>recover</strong> correctly.
+But if you let your system run long enough, your WAL file will just keep growing - indefinitely.</p>
+<p>Every transaction, every update, every byte of history lives on in that log, even after it’s no longer needed.
+Soon, you’ll have gigabytes of old, irrelevant log records sitting on disk.</p>
+<p>That’s where <strong>checkpointing</strong> and <strong>log compaction</strong> come in.</p>
+<hr />
+<h2 id="step-1-the-problem---infinite-logs"><a class="header" href="#step-1-the-problem---infinite-logs">Step 1: The Problem - Infinite Logs</a></h2>
+<p>Imagine your WAL has been running for hours:</p>
+<pre><code>LSN 100: BEGIN_TXN 1
+LSN 110: UPDATE page 3
+LSN 120: COMMIT_TXN 1
+...
+LSN 10,000,000: UPDATE page 8
+</code></pre>
+<p>The system is fine, but recovery is getting slower - because every crash means replaying millions of records.
+Even though most of those updates have long been persisted to disk, we’re still keeping them “just in case.”</p>
+<p>We need a way to:</p>
+<ol>
+<li>Persist a consistent snapshot of the system state.</li>
+<li>Discard old WAL entries that are no longer required for recovery.</li>
+</ol>
+<p>That’s exactly what a <strong>checkpoint</strong> does.</p>
+<hr />
+<h2 id="step-2-what-is-a-checkpoint"><a class="header" href="#step-2-what-is-a-checkpoint">Step 2: What Is a Checkpoint?</a></h2>
+<p>A <strong>checkpoint</strong> is a point in time where we guarantee:</p>
+<blockquote>
+<p>“All updates up to this LSN are reflected on disk.”</p>
+</blockquote>
+<p>When a checkpoint is taken, we flush all dirty pages to disk, record which transactions are still active, and write a <em>checkpoint record</em> to the WAL.</p>
+<p>Later, if a crash happens, recovery can skip all log records before the last checkpoint - because we know the data files already contain those effects.</p>
+<hr />
+<h2 id="step-3-checkpoint-contents"><a class="header" href="#step-3-checkpoint-contents">Step 3: Checkpoint Contents</a></h2>
+<p>A checkpoint record usually includes:</p>
+<ul>
+<li><strong>Last LSN flushed to disk</strong></li>
+<li><strong>List of active transactions</strong></li>
+<li><strong>Dirty page table</strong> (pages modified but not yet flushed)</li>
+</ul>
+<p>In our minimal WAL, we’ll store a simple JSON structure like:</p>
+<pre><code class="language-json">{
+  "type": "CHECKPOINT",
+  "active_txns": [3, 4],
+  "dirty_pages": [7, 9],
+  "last_lsn": 900
+}
+</code></pre>
+<p>This record marks a safe recovery starting point.
+When recovery begins, it finds the last checkpoint and starts replaying from there instead of from LSN 0.</p>
+<hr />
+<h2 id="step-4-how-to-take-a-checkpoint"><a class="header" href="#step-4-how-to-take-a-checkpoint">Step 4: How to Take a Checkpoint</a></h2>
+<p>To take a checkpoint safely:</p>
+<ol>
+<li><strong>Pause new writes</strong> (briefly or via a lightweight lock).</li>
+<li><strong>Flush all dirty pages</strong> to disk.</li>
+<li><strong>Record current active transactions and their last LSNs.</strong></li>
+<li><strong>Append a checkpoint record</strong> to the WAL.</li>
+<li><strong>Flush the WAL</strong> to ensure durability.</li>
+<li><strong>Resume normal operations.</strong></li>
+</ol>
+<p>Here’s the pseudocode:</p>
+<pre><code class="language-text">take_checkpoint():
+    lock system
+    flush all dirty pages
+    record active_txns and last_lsn
+    append CHECKPOINT record to WAL
+    fsync WAL
+    unlock system
+</code></pre>
+<hr />
+<h2 id="step-5-log-compaction-truncation"><a class="header" href="#step-5-log-compaction-truncation">Step 5: Log Compaction (Truncation)</a></h2>
+<p>Once we’ve written a checkpoint and ensured all earlier updates are persisted,
+<strong>older WAL entries become redundant</strong>. We can safely delete or truncate them.</p>
+<p>We call this <strong>log compaction</strong> or <strong>log truncation</strong>.</p>
+<ul>
+<li>The log can be truncated up to the last checkpoint’s LSN.</li>
+<li>Recovery will never need those earlier records again.</li>
+</ul>
+<p>This keeps our log file size bounded and ensures faster recovery.</p>
+<hr />
+<h2 id="step-6-example-timeline"><a class="header" href="#step-6-example-timeline">Step 6: Example Timeline</a></h2>
+<p>Let’s visualize how checkpointing fits into the life of a running database:</p>
+<pre><code>Time → →
+| Txn A Updates | Txn A Commits | Txn B Starts | Checkpoint | Txn B Updates | Crash |
+|----------------|---------------|---------------|-------------|---------------|-------|
+
+During recovery:
+  - Start from last checkpoint
+  - Redo only log records after checkpoint
+  - Undo incomplete Txn B if necessary
+</code></pre>
+<p>If we didn’t have checkpoints, recovery would have to scan the entire log from the beginning - much slower.</p>
+<hr />
+<h2 id="step-7-checkpointing-in-code-rust-example"><a class="header" href="#step-7-checkpointing-in-code-rust-example">Step 7: Checkpointing in Code (Rust Example)</a></h2>
+<p>Here’s a simple demonstration of checkpoint creation and log truncation logic,
+extending the recovery manager from the previous chapter.</p>
+<pre><pre class="playground"><code class="language-rust">use std::collections::{HashMap, HashSet};
+use std::fs::{File, OpenOptions};
+use std::io::{Seek, SeekFrom, Write};
+
+type Lsn = u64;
+type TxnId = u64;
+type PageId = u64;
+
+#[derive(Clone, Debug)]
+struct CheckpointRecord {
+    last_lsn: Lsn,
+    active_txns: HashSet&lt;TxnId&gt;,
+    dirty_pages: HashSet&lt;PageId&gt;,
+}
+
+impl CheckpointRecord {
+    fn serialize(&amp;self) -&gt; String {
+        format!(
+            "{{\"type\":\"CHECKPOINT\",\"last_lsn\":{},\"active_txns\":{:?},\"dirty_pages\":{:?}}}",
+            self.last_lsn, self.active_txns, self.dirty_pages
+        )
+    }
+}
+
+/// A minimal WAL manager that supports writing, checkpointing, and truncation.
+struct WalManager {
+    wal_path: String,
+    next_lsn: Lsn,
+    active_txns: HashSet&lt;TxnId&gt;,
+    dirty_pages: HashSet&lt;PageId&gt;,
+}
+
+impl WalManager {
+    fn new(wal_path: &amp;str) -&gt; Self {
+        Self {
+            wal_path: wal_path.to_string(),
+            next_lsn: 1,
+            active_txns: HashSet::new(),
+            dirty_pages: HashSet::new(),
+        }
+    }
+
+    fn append(&amp;mut self, record: &amp;str) {
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&amp;self.wal_path)
+            .expect("Failed to open WAL file");
+
+        writeln!(file, "{}", record).expect("Write WAL failed");
+        file.flush().unwrap();
+        self.next_lsn += 1;
+    }
+
+    fn take_checkpoint(&amp;mut self) -&gt; CheckpointRecord {
+        // Simulate flushing all dirty pages
+        println!("Flushing {} dirty pages to disk...", self.dirty_pages.len());
+
+        // Create checkpoint record
+        let chk = CheckpointRecord {
+            last_lsn: self.next_lsn,
+            active_txns: self.active_txns.clone(),
+            dirty_pages: self.dirty_pages.clone(),
+        };
+
+        // Write checkpoint to WAL
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&amp;self.wal_path)
+            .unwrap();
+
+        writeln!(file, "{}", chk.serialize()).unwrap();
+        file.flush().unwrap();
+
+        println!("Checkpoint created at LSN {}", chk.last_lsn);
+        chk
+    }
+
+    fn truncate_log(&amp;mut self, checkpoint: &amp;CheckpointRecord) {
+        // For simplicity, we just rewrite WAL file starting from checkpoint.
+        // In real DBs, you'd keep the tail after checkpoint and delete older data.
+        println!("Truncating WAL up to LSN {}", checkpoint.last_lsn);
+
+        let mut file = File::create(&amp;self.wal_path).unwrap();
+        writeln!(file, "{}", checkpoint.serialize()).unwrap();
+        file.flush().unwrap();
+    }
+}
+
+fn main() {
+    let mut wal = WalManager::new("wal.log");
+    wal.active_txns.insert(1);
+    wal.dirty_pages.insert(3);
+    wal.dirty_pages.insert(5);
+
+    wal.append("{\"type\":\"BEGIN_TXN\",\"txn\":1}");
+    wal.append("{\"type\":\"UPDATE\",\"txn\":1,\"page\":3}");
+    wal.append("{\"type\":\"COMMIT_TXN\",\"txn\":1}");
+
+    let chk = wal.take_checkpoint();
+    wal.truncate_log(&amp;chk);
+}</code></pre></pre>
+<h3 id="whats-happening"><a class="header" href="#whats-happening">What’s happening:</a></h3>
+<ul>
+<li>We log a few records.</li>
+<li>We flush dirty pages and write a checkpoint record.</li>
+<li>We truncate the WAL, keeping only the checkpoint forward.</li>
+</ul>
+<p>This simple mechanism ensures your WAL file stays compact and recovery starts quickly.</p>
+<hr />
+<h2 id="step-8-checkpoint-frequency"><a class="header" href="#step-8-checkpoint-frequency">Step 8: Checkpoint Frequency</a></h2>
+<p>How often should you checkpoint?
+It’s a trade-off:</p>
+<div class="table-wrapper"><table><thead><tr><th>Frequency</th><th>Pros</th><th>Cons</th></tr></thead><tbody>
+<tr><td>Frequent (every few seconds)</td><td>Faster recovery</td><td>Higher runtime overhead</td></tr>
+<tr><td>Infrequent (every few minutes)</td><td>Lower overhead</td><td>Longer recovery time</td></tr>
+</tbody></table>
+</div>
+<p>Many databases use a hybrid strategy - <strong>periodic checkpoints</strong> plus <strong>event-based checkpoints</strong> when the log grows beyond a certain threshold.</p>
+<hr />
+<h2 id="step-9-putting-it-all-together"><a class="header" href="#step-9-putting-it-all-together">Step 9: Putting It All Together</a></h2>
+<p>At this point, your database engine now supports:</p>
+<ul>
+<li><strong>Write-Ahead Logging</strong> - ensuring durability.</li>
+<li><strong>Crash Recovery</strong> - guaranteeing atomicity.</li>
+<li><strong>Checkpointing and Compaction</strong> - keeping the system lean and fast.</li>
+</ul>
+<p>These three pillars form the foundation of any reliable storage engine.</p>
+<hr />
+<h2 id="step-10-next-steps"><a class="header" href="#step-10-next-steps">Step 10: Next Steps</a></h2>
+<p>Now that we’ve built durability and recovery, we can explore:</p>
+<ul>
+<li><strong>Concurrency Control</strong> - locks, latches, and isolation.</li>
+<li><strong>Buffer Management</strong> - page replacement and pinning.</li>
+<li><strong>Replication</strong> - applying WAL across nodes for fault tolerance.</li>
+</ul>
+<p>But even at this stage, you’ve implemented something profound - a <strong>recoverable transactional storage system</strong>, built from first principles.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="ch5_recovery.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch7_concurrency.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="ch5_recovery.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch7_concurrency.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

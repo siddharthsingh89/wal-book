@@ -1,0 +1,474 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 4.1 : Designing a Minimal WAL in C#</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chapter-4-designing-a-minimal-wal-c-version"><a class="header" href="#chapter-4-designing-a-minimal-wal-c-version">Chapter 4: Designing a Minimal WAL (C# Version)</a></h1>
+<p>I got a request to write the chapter in C#. So, I rewrote this using LLMs. If needed, will add a Java version as well later. If you understand the concept explained in the previous
+Rust version, you can skip this chapter as this is just the same chapater copy pasted with C# code.</p>
+<p>In this tutorial, we’ll build a <strong>minimal Write-Ahead Log (WAL)</strong> in <strong>C#</strong>, step by step.</p>
+<p>By the end, you’ll have:</p>
+<ul>
+<li>A durable log file that survives crashes.</li>
+<li>Append and replay functionality.</li>
+<li>A foundation for recovery, checkpoints, and concurrency in later chapters.</li>
+</ul>
+<hr />
+<h2 id="step-1-understanding-the-goal"><a class="header" href="#step-1-understanding-the-goal">Step 1: Understanding the Goal</a></h2>
+<p>A Write-Ahead Log ensures that <strong>every change is recorded to disk before being applied</strong>.</p>
+<p>Think of it as your safety net:</p>
+<pre><code>┌──────────────┐        ┌──────────────┐
+│  Operation   │        │   Database   │
+│ (e.g. update)│        │   State      │
+└──────┬───────┘        └──────┬───────┘
+        │                        │
+        ▼                        │
+   Write to WAL File              │
+        │                        │
+        ▼                        │
+   Flush to Disk (Durable)        │
+        │                        │
+        └────────► Apply to DB ◄──┘
+</code></pre>
+<p>Rule:</p>
+<blockquote>
+<p><strong>No modification happens unless it’s safely logged first.</strong></p>
+</blockquote>
+<hr />
+<h2 id="step-2-log-record-format"><a class="header" href="#step-2-log-record-format">Step 2: Log Record Format</a></h2>
+<p>We’ll store each record with a <strong>4-byte length prefix</strong> followed by the actual payload bytes.</p>
+<pre><code>+------------+-------------------+
+| 4 bytes    | variable length   |
+| length (u32) | payload bytes   |
++------------+-------------------+
+</code></pre>
+<p>This allows us to detect incomplete entries after a crash.</p>
+<hr />
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<p>If we write two entries: <code>set x=1</code> and <code>set y=2</code>,
+the file might look like this (in conceptual view):</p>
+<pre><code>┌──────────────────────────────────────────────┐
+│ [06][set x=1][06][set y=2]                  │
+└──────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="step-3-implementing-the-wal-class"><a class="header" href="#step-3-implementing-the-wal-class">Step 3: Implementing the WAL Class</a></h2>
+<p>Let’s start with the class definition and basic setup.</p>
+<pre><code class="language-csharp">using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+
+public class WriteAheadLog : IDisposable
+{
+    private readonly FileStream _fileStream;
+    private readonly BinaryWriter _writer;
+
+    public string FilePath { get; }
+
+    public WriteAheadLog(string path)
+    {
+        FilePath = path;
+        _fileStream = new FileStream(
+            path,
+            FileMode.OpenOrCreate,
+            FileAccess.ReadWrite,
+            FileShare.Read,
+            4096,
+            FileOptions.WriteThrough // ensures OS-level durability
+        );
+        _fileStream.Seek(0, SeekOrigin.End); // append mode
+        _writer = new BinaryWriter(_fileStream, Encoding.UTF8, leaveOpen: true);
+    }
+
+    public void Dispose()
+    {
+        _writer?.Dispose();
+        _fileStream?.Dispose();
+    }
+}
+</code></pre>
+<blockquote>
+<p>You’ve built the foundation:
+an append-only, durable file with OS-level write-through mode.</p>
+</blockquote>
+<hr />
+<h2 id="step-4-appending-entries"><a class="header" href="#step-4-appending-entries">Step 4: Appending Entries</a></h2>
+<p>Now we add the <code>Append()</code> method.</p>
+<pre><code class="language-csharp">public void Append(string data)
+{
+    var bytes = Encoding.UTF8.GetBytes(data);
+    var length = (uint)bytes.Length;
+
+    // Write length prefix
+    _writer.Write(length);
+
+    // Write payload
+    _writer.Write(bytes);
+
+    // Flush ensures data hits disk
+    _writer.Flush();
+    _fileStream.Flush(true); // flush to physical media
+}
+</code></pre>
+<p>Each append guarantees:</p>
+<ol>
+<li>Length prefix and payload are written atomically.</li>
+<li>Flush ensures durability.</li>
+</ol>
+<hr />
+<h3 id="file-layout-after-two-appends"><a class="header" href="#file-layout-after-two-appends">File Layout After Two Appends</a></h3>
+<pre><code>Offset →
+0        4        10       14
+│        │        │        │
+▼        ▼        ▼        ▼
+[06][set x=1][06][set y=2]
+</code></pre>
+<blockquote>
+<p><strong>Now you have a WAL that guarantees data won’t be lost even if the app crashes.</strong></p>
+</blockquote>
+<hr />
+<h2 id="step-5-replaying-the-wal"><a class="header" href="#step-5-replaying-the-wal">Step 5: Replaying the WAL</a></h2>
+<p>Recovery works by reading each complete entry from the file.</p>
+<pre><code class="language-csharp">public static IEnumerable&lt;string&gt; Replay(string path)
+{
+    var results = new List&lt;string&gt;();
+    if (!File.Exists(path))
+        return results;
+
+    using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+    using var reader = new BinaryReader(fs, Encoding.UTF8);
+
+    while (fs.Position &lt; fs.Length)
+    {
+        try
+        {
+            uint len = reader.ReadUInt32();
+            byte[] data = reader.ReadBytes((int)len);
+
+            // if data is incomplete, stop replay
+            if (data.Length &lt; len)
+                break;
+
+            results.Add(Encoding.UTF8.GetString(data));
+        }
+        catch (EndOfStreamException)
+        {
+            break; // crashed mid-write
+        }
+    }
+
+    return results;
+}
+</code></pre>
+<hr />
+<h3 id="recovery-visualization"><a class="header" href="#recovery-visualization">Recovery Visualization</a></h3>
+<pre><code>┌────────────────────────────────────────┐
+│ WAL File: [len][payload][len][payload] │
+└────────────────────────────────────────┘
+           │
+           ▼
+   Read entry by entry
+           │
+           ▼
+   Replay operations in order
+</code></pre>
+<p>If a crash occurred mid-write, the partial record at the end is safely ignored.</p>
+<blockquote>
+<p>You’ve implemented <strong>crash-safe recovery</strong> logic.</p>
+</blockquote>
+<hr />
+<h2 id="step-6-testing-it-all-together"><a class="header" href="#step-6-testing-it-all-together">Step 6: Testing It All Together</a></h2>
+<p>Let’s test everything in a simple <code>Main()</code>:</p>
+<pre><code class="language-csharp">public static void Main()
+{
+    const string path = "wal.log";
+
+    // Step 1: Write some entries
+    using (var wal = new WriteAheadLog(path))
+    {
+        wal.Append("insert key1=value1");
+        wal.Append("update key1=value2");
+    }
+
+    // Step 2: Simulate crash → reopen and replay
+    var recovered = WriteAheadLog.Replay(path);
+    foreach (var entry in recovered)
+    {
+        Console.WriteLine($"Replayed: {entry}");
+    }
+}
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Replayed: insert key1=value1
+Replayed: update key1=value2
+</code></pre>
+<hr />
+<h2 id="step-7-visualizing-the-full-lifecycle"><a class="header" href="#step-7-visualizing-the-full-lifecycle">Step 7: Visualizing the Full Lifecycle</a></h2>
+<pre><code>Write → Flush → Crash → Replay
+
+┌──────────────┐      ┌──────────────┐
+│ wal.Append() │ ---&gt; │ Flush to Disk│
+└──────────────┘      └──────────────┘
+        │                    │
+        │  Crash occurs!     │
+        ▼                    ▼
+┌──────────────────────────────────────┐
+│ WAL file on disk survives crash      │
+│ Replay reads all complete entries    │
+└──────────────────────────────────────┘
+</code></pre>
+<blockquote>
+<p><strong>At this point:</strong>
+You’ve built a fully functional minimal WAL in <strong>C#</strong> — durable, replay-safe, and extendable.</p>
+</blockquote>
+<hr />
+<h2 id="step-8-reflection-and-next-steps"><a class="header" href="#step-8-reflection-and-next-steps">Step 8: Reflection and Next Steps</a></h2>
+<p>What you’ve accomplished:</p>
+<ul>
+<li>Built a minimal append-only WAL file.</li>
+<li>Achieved durability using <code>Flush()</code> and <code>FileOptions.WriteThrough</code>.</li>
+<li>Implemented safe crash recovery via replay.</li>
+</ul>
+<h3 id="whats-next"><a class="header" href="#whats-next">What’s Next</a></h3>
+<p>In the coming chapters, we’ll:</p>
+<ul>
+<li><strong>Chapter 5:</strong> Implement structured crash recovery and consistency checks.</li>
+<li><strong>Chapter 6:</strong> Add checkpointing and log compaction to manage file growth.</li>
+<li><strong>Chapter 7:</strong> Handle concurrent writes safely.</li>
+<li><strong>Chapter 8:</strong> Build a full-featured WAL in Rust (and compare with this C# version).</li>
+</ul>
+<hr />
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="ch4_design.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch5_recovery.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="ch4_design.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch5_recovery.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

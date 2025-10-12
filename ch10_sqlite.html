@@ -1,0 +1,463 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>SQLite WAL Mode</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chapter-10-sqlite-wal-mode"><a class="header" href="#chapter-10-sqlite-wal-mode">Chapter 10: SQLite WAL Mode</a></h1>
+<h2 id="1-introduction"><a class="header" href="#1-introduction"><strong>1. Introduction</strong></a></h2>
+<p>SQLite is one of the most widely used embedded databases in the world. It powers everything from mobile applications and web browsers to IoT devices and operating systems. One of its most remarkable features is its simplicity-just a single file acts as a complete database.
+But simplicity comes with a price: concurrency and performance challenges.</p>
+<p>In earlier versions, SQLite used a <strong>rollback journal</strong> mechanism to ensure atomicity and durability. However, this model required exclusive file locking during commits, severely limiting write concurrency.</p>
+<p>To solve this, SQLite introduced <strong>Write-Ahead Logging (WAL) mode</strong> in version <strong>3.7.0 (2010)</strong>. WAL mode fundamentally changed how SQLite handles transactions, offering better concurrency, crash recovery, and performance under multi-reader workloads.</p>
+<blockquote>
+<p>Official Docs: <a href="https://www.sqlite.org/wal.html">SQLite WAL Mode Overview</a></p>
+</blockquote>
+<hr />
+<h2 id="2-the-core-idea"><a class="header" href="#2-the-core-idea"><strong>2. The Core Idea</strong></a></h2>
+<p>In <strong>WAL mode</strong>, writes are no longer made directly to the main database file (<code>.db</code>).
+Instead, they are <strong>appended</strong> to a separate file - the <strong>WAL file</strong> (<code>.db-wal</code>).</p>
+<ul>
+<li>The WAL file stores the new versions of modified pages.</li>
+<li>Readers continue to access the old database file until a checkpoint merges the WAL contents back into it.</li>
+<li>This eliminates the need for readers to block writers.</li>
+</ul>
+<p>SQLite’s WAL file acts as a <strong>rolling append-only log of page changes</strong>, maintaining durability and crash safety.</p>
+<pre><code>┌──────────────┐     ┌─────────────┐
+│ main.db file │     │  main.db-wal│
+└──────────────┘     └─────────────┘
+       ↑                     ↑
+       │                     │
+    checkpoint ←────── append writes
+</code></pre>
+<hr />
+<h2 id="3-how-wal-mode-works"><a class="header" href="#3-how-wal-mode-works"><strong>3. How WAL Mode Works</strong></a></h2>
+<h3 id="31-normal-journal-mode-vs-wal-mode"><a class="header" href="#31-normal-journal-mode-vs-wal-mode"><strong>3.1 Normal Journal Mode vs WAL Mode</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Rollback Journal</th><th>WAL Mode</th></tr></thead><tbody>
+<tr><td>Write behavior</td><td>Copy old pages to rollback journal, then write new pages</td><td>Append modified pages to WAL file</td></tr>
+<tr><td>Reader-writer concurrency</td><td>Readers block writers</td><td>Readers and writers can proceed concurrently</td></tr>
+<tr><td>Crash recovery</td><td>Rollback uncommitted changes</td><td>Replay committed changes from WAL</td></tr>
+<tr><td>Checkpointing</td><td>Not needed (implicit)</td><td>Required to merge WAL into DB</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h3 id="32-wal-file-structure"><a class="header" href="#32-wal-file-structure"><strong>3.2 WAL File Structure</strong></a></h3>
+<p>Each WAL file is composed of <strong>frames</strong>, each representing a modified page.</p>
+<p><strong>Structure:</strong></p>
+<pre><code>+-----------------------------------------------------------+
+| WAL Header (32 bytes)                                     |
++-----------------------------------------------------------+
+| Frame #1 Header (24 bytes) | Frame #1 Page Data (4096 B)  |
++-----------------------------------------------------------+
+| Frame #2 Header (24 bytes) | Frame #2 Page Data (4096 B)  |
++-----------------------------------------------------------+
+| ...                                                         
++-----------------------------------------------------------+
+</code></pre>
+<p>Each frame includes:</p>
+<ul>
+<li><strong>Page number</strong></li>
+<li><strong>Commit record number (or LSN)</strong></li>
+<li><strong>Checksum</strong></li>
+<li><strong>The page image</strong></li>
+</ul>
+<p>SQLite always appends new frames to the WAL file until a <strong>checkpoint</strong> occurs.</p>
+<hr />
+<h3 id="33-checkpointing"><a class="header" href="#33-checkpointing"><strong>3.3 Checkpointing</strong></a></h3>
+<p>Checkpointing merges changes from the WAL file into the main database.
+There are three types:</p>
+<div class="table-wrapper"><table><thead><tr><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Passive</strong></td><td>Merge only if readers are not active</td></tr>
+<tr><td><strong>Full</strong></td><td>Waits for readers to finish before checkpointing</td></tr>
+<tr><td><strong>Restart</strong></td><td>Like full, but also resets WAL</td></tr>
+<tr><td><strong>Truncate</strong></td><td>Like restart, but truncates WAL to zero bytes</td></tr>
+</tbody></table>
+</div>
+<p>You can manually trigger one using SQL:</p>
+<pre><code class="language-sql">PRAGMA wal_checkpoint(FULL);
+</code></pre>
+<p>Or configure automatic checkpoints:</p>
+<pre><code class="language-sql">PRAGMA wal_autocheckpoint = 1000;
+</code></pre>
+<hr />
+<h2 id="4-code-example---enabling-wal-mode"><a class="header" href="#4-code-example---enabling-wal-mode"><strong>4. Code Example - Enabling WAL Mode</strong></a></h2>
+<p>Let’s enable WAL mode and observe its behavior:</p>
+<pre><code class="language-sql">-- Enable WAL mode
+PRAGMA journal_mode = WAL;
+
+-- Create a table
+CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT);
+
+-- Insert some data
+INSERT INTO users(name) VALUES ('Alice');
+INSERT INTO users(name) VALUES ('Bob');
+
+-- Check current WAL mode
+PRAGMA journal_mode;
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>wal
+</code></pre>
+<p>Now, check your directory - you’ll see a new file:</p>
+<pre><code>mydb.db-wal
+</code></pre>
+<p>This file will grow as you write, then shrink after a checkpoint.</p>
+<hr />
+<h2 id="5-c-code-snippet-opening-sqlite-in-wal-mode"><a class="header" href="#5-c-code-snippet-opening-sqlite-in-wal-mode"><strong>5. C Code Snippet: Opening SQLite in WAL Mode</strong></a></h2>
+<p>From SQLite’s own <a href="https://github.com/sqlite/sqlite/blob/master/src/wal.c">test fixture code</a>:</p>
+<pre><code class="language-c">sqlite3 *db;
+int rc = sqlite3_open("test.db", &amp;db);
+if (rc == SQLITE_OK) {
+    sqlite3_exec(db, "PRAGMA journal_mode=WAL;", NULL, NULL, NULL);
+}
+</code></pre>
+<p>SQLite internally calls <code>sqlite3PagerWalSupported()</code> and then opens a <strong>WAL object</strong> using the <code>sqlite3WalOpen()</code> function, which lives in <code>wal.c</code>.</p>
+<p>Simplified from the SQLite source:</p>
+<pre><code class="language-c">int sqlite3WalOpen(
+  sqlite3_vfs *pVfs,
+  const char *zDb,
+  sqlite3_file *pDbFd,
+  int syncFlags,
+  int *pExists,
+  sqlite3_wal **ppWal
+){
+  // Open or create a .db-wal file
+  // Initialize WAL header and frame buffer
+  // Prepare locks for writers and readers
+}
+</code></pre>
+<hr />
+<h2 id="6-concurrency-in-wal-mode"><a class="header" href="#6-concurrency-in-wal-mode"><strong>6. Concurrency in WAL Mode</strong></a></h2>
+<p>SQLite implements <strong>multi-reader, single-writer</strong> concurrency.</p>
+<ul>
+<li>Multiple readers can read from the database while the writer appends to WAL.</li>
+<li>Writers only need to acquire an <strong>exclusive WAL lock</strong> when committing.</li>
+<li>Readers use a snapshot view based on the WAL header.</li>
+</ul>
+<p>Internally, this works through <strong>shared memory (<code>.db-shm</code>)</strong> that tracks:</p>
+<ul>
+<li>Readers’ positions (read marks)</li>
+<li>The last committed frame</li>
+<li>The writer’s status</li>
+</ul>
+<pre><code>main.db
+main.db-wal
+main.db-shm
+</code></pre>
+<p><code>main.db-shm</code> helps coordinate access among multiple processes.</p>
+<hr />
+<h2 id="7-recovery-process"><a class="header" href="#7-recovery-process"><strong>7. Recovery Process</strong></a></h2>
+<p>On startup:</p>
+<ol>
+<li>SQLite checks if <code>.db-wal</code> exists.</li>
+<li>If yes, it validates the WAL header.</li>
+<li>Replays all committed frames (based on the last commit LSN).</li>
+<li>Applies changes to the main database.</li>
+<li>Truncates the WAL after recovery.</li>
+</ol>
+<pre><code class="language-c">// Simplified replay logic
+while (next_frame &lt;= last_commit_frame) {
+    apply_page_to_db(wal_get_page(frame.page_no));
+}
+</code></pre>
+<p>This ensures <strong>atomic commit</strong> and <strong>durability</strong> - even if the crash happened mid-transaction.</p>
+<hr />
+<h2 id="8-performance-and-tradeoffs"><a class="header" href="#8-performance-and-tradeoffs"><strong>8. Performance and Tradeoffs</strong></a></h2>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li>Readers and writers don’t block each other.</li>
+<li>Writes are sequential (append-only).</li>
+<li>Excellent for read-heavy workloads.</li>
+</ul>
+<p><strong>Disadvantages:</strong></p>
+<ul>
+<li>Slightly higher disk space usage (WAL + main file).</li>
+<li>Checkpointing introduces periodic I/O bursts.</li>
+<li>Limited scalability on concurrent writes (still single-writer).</li>
+</ul>
+<hr />
+<h2 id="9-wal-mode-configuration-and-monitoring"><a class="header" href="#9-wal-mode-configuration-and-monitoring"><strong>9. WAL Mode Configuration and Monitoring</strong></a></h2>
+<pre><code class="language-sql">-- View WAL file size
+PRAGMA wal_checkpoint;
+
+-- Force a manual checkpoint
+PRAGMA wal_checkpoint(TRUNCATE);
+
+-- Configure auto-checkpoint
+PRAGMA wal_autocheckpoint = 1000;
+
+-- Check if WAL is enabled
+PRAGMA journal_mode;
+</code></pre>
+<hr />
+<h2 id="10-experiment---visualizing-wal-in-action"><a class="header" href="#10-experiment---visualizing-wal-in-action"><strong>10. Experiment - Visualizing WAL in Action</strong></a></h2>
+<p>Try this Python script to observe WAL behavior live:</p>
+<pre><code class="language-python">import sqlite3, os, time
+
+db = sqlite3.connect("wal_test.db")
+cur = db.cursor()
+cur.execute("PRAGMA journal_mode=WAL;")
+cur.execute("CREATE TABLE IF NOT EXISTS test(id INTEGER PRIMARY KEY, value TEXT)")
+
+for i in range(5):
+    cur.execute("INSERT INTO test(value) VALUES (?)", (f"value-{i}",))
+    db.commit()
+    print("Inserted:", i)
+    print("WAL size:", os.path.getsize("wal_test.db-wal"))
+    time.sleep(1)
+</code></pre>
+<p>You’ll see the WAL file grow, then shrink when checkpointed.</p>
+<hr />
+<h2 id="11-design-insights"><a class="header" href="#11-design-insights"><strong>11. Design Insights</strong></a></h2>
+<p>SQLite’s WAL design reflects minimalism:</p>
+<ul>
+<li><strong>Single-writer concurrency</strong> suits embedded environments.</li>
+<li><strong>Append-only writes</strong> minimize random I/O.</li>
+<li><strong>Auto-checkpointing</strong> keeps WAL manageable.</li>
+<li><strong>Crash recovery</strong> is simple: replay the log.</li>
+</ul>
+<p>Its architecture inspired lightweight WAL systems in other embedded and distributed databases.</p>
+<hr />
+<h2 id="12-references"><a class="header" href="#12-references"><strong>12. References</strong></a></h2>
+<ul>
+<li><a href="https://www.sqlite.org/wal.html">SQLite WAL Documentation</a></li>
+<li><a href="https://github.com/sqlite/sqlite/blob/master/src/wal.c">SQLite Source Code (<code>wal.c</code>)</a></li>
+<li><a href="https://www.sqlite.org/checkpoint.html">SQLite Checkpointing Details</a></li>
+<li><a href="http://aosabook.org/en/sqlite.html">SQLite Internals – The Architecture of Open Source Applications</a></li>
+</ul>
+<hr />
+<h2 id="13-summary"><a class="header" href="#13-summary"><strong>13. Summary</strong></a></h2>
+<p>SQLite’s <strong>WAL mode</strong> turns a single-file embedded database into a high-performance, crash-safe system capable of serving multiple readers and a single writer concurrently.
+Its design is elegant - a minimal implementation of <strong>write-ahead logging</strong> tuned for simplicity and embedded environments.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="ch9_postgres.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch11_innodb.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="ch9_postgres.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch11_innodb.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

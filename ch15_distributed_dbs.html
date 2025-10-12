@@ -1,0 +1,530 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Distributed Databases</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="chapter-15-distributed-databases"><a class="header" href="#chapter-15-distributed-databases">Chapter 15: Distributed Databases</a></h2>
+<hr />
+<h3 id="introduction-when-one-wal-isnt-enough"><a class="header" href="#introduction-when-one-wal-isnt-enough"><strong>Introduction: When One WAL Isn’t Enough</strong></a></h3>
+<p>In a single-node system, the <strong>Write-Ahead Log (WAL)</strong> protects us from crashes.
+In a replicated cluster, it ensures all nodes agree on what happened.</p>
+<p>But what happens when your database isn’t just <em>replicated</em> - it’s <em>distributed</em> across multiple <strong>regions, continents, and data centers</strong>?</p>
+<p>This is the world of <strong>distributed databases</strong>, where WAL evolves into a <strong>global coordination mechanism</strong> that guarantees consistency even across thousands of machines.</p>
+<p>Let’s start with a simple idea.</p>
+<hr />
+<h3 id="1-the-big-picture-from-local-logs-to-global-logs"><a class="header" href="#1-the-big-picture-from-local-logs-to-global-logs"><strong>1. The Big Picture: From Local Logs to Global Logs</strong></a></h3>
+<p>A distributed database is essentially a <strong>network of smaller databases</strong>, called <em>nodes</em> or <em>replicas</em>, that coordinate through <strong>logs</strong>.</p>
+<p>Each node has:</p>
+<ul>
+<li>Its own <strong>local WAL</strong> (for crash recovery)</li>
+<li>And participates in a <strong>distributed WAL</strong> (for global order)</li>
+</ul>
+<pre><code>        ┌──────────┐
+        │ Client   │
+        └────┬─────┘
+             │
+             ▼
+   ┌───────────────┐
+   │ Distributed   │   (Global WAL / Consensus)
+   │   Log Layer   │
+   └────┬────┬─────┘
+        │    │
+        ▼    ▼
+ ┌────────┐ ┌────────┐
+ │ Node A │ │ Node B │
+ │ Local  │ │ Local  │
+ │  WAL   │ │  WAL   │
+ └────────┘ └────────┘
+</code></pre>
+<p>Every write first lands in a <strong>per-node WAL</strong>, but then must be <strong>agreed upon globally</strong> through replication and consensus.</p>
+<p>This ensures that:</p>
+<ul>
+<li>Every replica applies changes in the same order</li>
+<li>No node sees “phantom” data or missed writes</li>
+<li>The system recovers even if entire regions fail</li>
+</ul>
+<hr />
+<h3 id="2-key-principles-of-distributed-wal"><a class="header" href="#2-key-principles-of-distributed-wal"><strong>2. Key Principles of Distributed WAL</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Local Durability</strong></td><td>Each node logs changes to its own WAL before applying them</td></tr>
+<tr><td><strong>Replication</strong></td><td>WAL entries are copied to followers</td></tr>
+<tr><td><strong>Consensus</strong></td><td>A group of nodes agrees on the order of commits</td></tr>
+<tr><td><strong>Sharding</strong></td><td>The keyspace is split into ranges or partitions, each with its own WAL</td></tr>
+<tr><td><strong>Global Coordination</strong></td><td>Clock or timestamp protocols maintain ordering across shards</td></tr>
+</tbody></table>
+</div>
+<p>Distributed databases integrate these layers into a single cohesive system.</p>
+<hr />
+<h3 id="3-wal-at-the-shard-level"><a class="header" href="#3-wal-at-the-shard-level"><strong>3. WAL at the Shard Level</strong></a></h3>
+<p>Distributed databases don’t use one giant log for the whole system - that would be impossible to scale.</p>
+<p>Instead, they split the data into <strong>shards</strong> or <strong>ranges</strong>, each maintaining its <strong>own independent WAL</strong>.</p>
+<p>Example:</p>
+<div class="table-wrapper"><table><thead><tr><th>Shard</th><th>Data Range</th><th>WAL File</th><th>Leader Node</th></tr></thead><tbody>
+<tr><td>1</td><td>keys [0-1000)</td><td>wal_shard_1.log</td><td>Node A</td></tr>
+<tr><td>2</td><td>keys [1000-2000)</td><td>wal_shard_2.log</td><td>Node B</td></tr>
+<tr><td>3</td><td>keys [2000-3000)</td><td>wal_shard_3.log</td><td>Node C</td></tr>
+</tbody></table>
+</div>
+<p>Each WAL is replicated and managed by its own mini-consensus group (like Raft).</p>
+<p>This design is called <strong>Multi-Raft</strong> - and is used in <strong>CockroachDB</strong>, <strong>TiDB</strong>, and <strong>YugabyteDB</strong>.</p>
+<hr />
+<h3 id="4-example-multi-raft-in-action"><a class="header" href="#4-example-multi-raft-in-action"><strong>4. Example: Multi-Raft in Action</strong></a></h3>
+<p>Let’s visualize it:</p>
+<pre><code>Shard 1: Keys 0–1000
+   A(Leader)
+   /     \
+  B       C
+
+Shard 2: Keys 1000–2000
+   B(Leader)
+   /     \
+  A       C
+
+Shard 3: Keys 2000–3000
+   C(Leader)
+   /     \
+  A       B
+</code></pre>
+<p>Each shard’s WAL operates independently:</p>
+<ul>
+<li>Writes to shard 1 only affect <code>wal_1</code></li>
+<li>Writes to shard 2 affect <code>wal_2</code></li>
+</ul>
+<p>This allows <strong>parallel replication and recovery</strong>.</p>
+<p>If Node B fails, only the shards it leads are impacted.</p>
+<hr />
+<h3 id="5-global-transactions-and-distributed-wal-coordination"><a class="header" href="#5-global-transactions-and-distributed-wal-coordination"><strong>5. Global Transactions and Distributed WAL Coordination</strong></a></h3>
+<p>Now comes the tricky part - what if a transaction touches <strong>multiple shards</strong>?</p>
+<p>Example:</p>
+<pre><code class="language-sql">BEGIN;
+UPDATE accounts SET balance = balance - 100 WHERE id = 42;   -- Shard 1
+UPDATE accounts SET balance = balance + 100 WHERE id = 900;   -- Shard 2
+COMMIT;
+</code></pre>
+<p>This is a <strong>distributed transaction</strong> - and the WAL needs to ensure atomicity across multiple logs.</p>
+<p>That’s where <strong>two-phase commit (2PC)</strong> and <strong>timestamp ordering</strong> protocols come in.</p>
+<hr />
+<h3 id="6-two-phase-commit-2pc-and-wal"><a class="header" href="#6-two-phase-commit-2pc-and-wal"><strong>6. Two-Phase Commit (2PC) and WAL</strong></a></h3>
+<p>2PC ensures that either <em>all</em> shards commit or <em>none</em> do.
+It works as follows:</p>
+<h4 id="step-1-prepare-phase"><a class="header" href="#step-1-prepare-phase">Step 1: Prepare Phase</a></h4>
+<ul>
+<li>Coordinator sends “prepare” to all shards.</li>
+<li>Each shard appends a “prepare” record to its WAL and replies “ready”.</li>
+</ul>
+<h4 id="step-2-commit-phase"><a class="header" href="#step-2-commit-phase">Step 2: Commit Phase</a></h4>
+<ul>
+<li>If all shards are ready, coordinator sends “commit”.</li>
+<li>Each shard appends a “commit” record to WAL and applies the transaction.</li>
+</ul>
+<p><strong>Example WAL Entries:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Shard</th><th>WAL Entries</th></tr></thead><tbody>
+<tr><td>1</td><td>prepare(tx42), commit(tx42)</td></tr>
+<tr><td>2</td><td>prepare(tx42), commit(tx42)</td></tr>
+</tbody></table>
+</div>
+<p>If a crash happens mid-way, the WAL tells each shard exactly what phase it was in - ensuring recovery consistency.</p>
+<hr />
+<h3 id="7-global-timestamps-and-wal-ordering"><a class="header" href="#7-global-timestamps-and-wal-ordering"><strong>7. Global Timestamps and WAL Ordering</strong></a></h3>
+<p>Some modern databases, like <strong>Google Spanner</strong>, avoid traditional 2PC by assigning <strong>globally synchronized timestamps</strong> using atomic clocks and GPS.</p>
+<p>Each transaction gets a unique commit timestamp <code>Tcommit</code>, and WAL entries are ordered accordingly.</p>
+<p><strong>Spanner WAL Structure (simplified):</strong></p>
+<pre><code>Tcommit=10001: UPDATE accounts SET balance=...
+Tcommit=10002: INSERT INTO transfers ...
+</code></pre>
+<p>Because every node’s clock is synchronized within microseconds, Spanner can ensure that:</p>
+<ul>
+<li>All replicas agree on commit order</li>
+<li>Reads at timestamp T see a consistent snapshot</li>
+</ul>
+<p>This turns WAL into a <strong>time-ordered global log</strong>.</p>
+<hr />
+<h3 id="8-wal-and-snapshot-isolation"><a class="header" href="#8-wal-and-snapshot-isolation"><strong>8. WAL and Snapshot Isolation</strong></a></h3>
+<p>Many distributed databases provide <strong>Snapshot Isolation (SI)</strong> or <strong>Serializable Isolation</strong>.</p>
+<p>They use WAL + MVCC (multi-version concurrency control):</p>
+<ul>
+<li>Each write appends a new version to WAL</li>
+<li>Readers can choose a consistent timestamp</li>
+<li>No global locking is needed</li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Version</th><th>Key</th><th>Value</th><th>CommitTS</th></tr></thead><tbody>
+<tr><td>v1</td><td>x</td><td>10</td><td>1001</td></tr>
+<tr><td>v2</td><td>x</td><td>12</td><td>1005</td></tr>
+</tbody></table>
+</div>
+<p>A read at T=1002 sees v1.
+A read at T=1006 sees v2.</p>
+<p>WAL entries store both value and version metadata.</p>
+<hr />
+<h3 id="9-recovery-across-nodes"><a class="header" href="#9-recovery-across-nodes"><strong>9. Recovery Across Nodes</strong></a></h3>
+<p>In distributed systems, recovery means two things:</p>
+<ol>
+<li><strong>Local recovery:</strong> replay local WAL to restore node’s last known state.</li>
+<li><strong>Global recovery:</strong> reconcile with cluster to ensure no stale commits.</li>
+</ol>
+<p>Steps during node restart:</p>
+<ol>
+<li>Node replays its WAL → rebuilds local store.</li>
+<li>Node contacts peers → requests missing entries (log catch-up).</li>
+<li>Consensus layer ensures log alignment.</li>
+<li>Node rejoins replication group safely.</li>
+</ol>
+<p>This process guarantees both <strong>durability</strong> and <strong>consistency</strong>.</p>
+<hr />
+<h3 id="10-checkpoints-and-compaction-in-distributed-systems"><a class="header" href="#10-checkpoints-and-compaction-in-distributed-systems"><strong>10. Checkpoints and Compaction in Distributed Systems</strong></a></h3>
+<p>Just like single-node WALs, distributed logs grow indefinitely.</p>
+<p>Hence, each shard periodically:</p>
+<ul>
+<li>Takes a <strong>snapshot</strong></li>
+<li>Stores the latest applied index</li>
+<li>Truncates logs up to that point</li>
+</ul>
+<p>Example:</p>
+<pre><code>snapshot_at_index=5000
+truncate WAL &lt;= 5000
+</code></pre>
+<p>For distributed consistency, all nodes in the group must agree on truncation boundaries.</p>
+<p>In Raft:</p>
+<pre><code class="language-text">InstallSnapshot RPC
+</code></pre>
+<p>transfers the snapshot to lagging followers to catch them up efficiently.</p>
+<hr />
+<h3 id="11-real-systems-how-they-use-distributed-wals"><a class="header" href="#11-real-systems-how-they-use-distributed-wals"><strong>11. Real Systems: How They Use Distributed WALs</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>System</th><th>WAL Type</th><th>Consensus</th><th>Notes</th></tr></thead><tbody>
+<tr><td><strong>Google Spanner</strong></td><td>Global WAL (timestamp ordered)</td><td>Paxos</td><td>True global consistency</td></tr>
+<tr><td><strong>CockroachDB</strong></td><td>Multi-Raft WALs</td><td>Raft</td><td>SQL on key-value store</td></tr>
+<tr><td><strong>TiDB</strong></td><td>Region-based WAL</td><td>Raft</td><td>Each “region” has its own log</td></tr>
+<tr><td><strong>YugabyteDB</strong></td><td>Tablet WAL</td><td>Raft</td><td>Compatible with PostgreSQL</td></tr>
+<tr><td><strong>MongoDB</strong></td><td>Oplog (logical WAL)</td><td>Raft-like</td><td>Eventual or strong consistency</td></tr>
+<tr><td><strong>FoundationDB</strong></td><td>Deterministic Global Log</td><td>Custom</td><td>Centralized log replication</td></tr>
+</tbody></table>
+</div>
+<p>Let’s look at two examples in more depth.</p>
+<hr />
+<h3 id="12-example-1-cockroachdbs-distributed-wal-design"><a class="header" href="#12-example-1-cockroachdbs-distributed-wal-design"><strong>12. Example 1: CockroachDB’s Distributed WAL Design</strong></a></h3>
+<p>CockroachDB runs a Raft consensus group per range.</p>
+<ul>
+<li>Each range = independent WAL</li>
+<li>Range leaders replicate logs to followers</li>
+<li>The KV store (RocksDB) persists them locally</li>
+</ul>
+<p>When you run:</p>
+<pre><code class="language-sql">INSERT INTO users VALUES (1, 'Alice');
+</code></pre>
+<p>It becomes a Raft log entry in a specific range’s WAL.</p>
+<p>CockroachDB guarantees <strong>linearizable consistency</strong> because each Raft log represents a serial history of operations for its range.</p>
+<p><strong>Recovery:</strong> If a leader crashes, followers’ WALs elect a new leader and resume from last committed index.</p>
+<hr />
+<h3 id="13-example-2-google-spanners-truetime--wal"><a class="header" href="#13-example-2-google-spanners-truetime--wal"><strong>13. Example 2: Google Spanner’s TrueTime + WAL</strong></a></h3>
+<p>Spanner maintains a <strong>globally consistent WAL</strong> across continents using atomic clocks.</p>
+<p>Each mutation:</p>
+<ol>
+<li>Is assigned a timestamp <code>t</code></li>
+<li>Replicated via Paxos</li>
+<li>Committed when majority acknowledges</li>
+<li>Applied in timestamp order</li>
+</ol>
+<p>Diagram:</p>
+<pre><code>Clients ---&gt; Leaders ---&gt; Paxos Replicas ---&gt; Global WAL
+         (assign t)       (commit)           (apply in order)
+</code></pre>
+<p>This gives <strong>serializability</strong> with <strong>no central coordinator</strong>, thanks to globally synchronized clocks.</p>
+<hr />
+<h3 id="14-challenges-in-distributed-wals"><a class="header" href="#14-challenges-in-distributed-wals"><strong>14. Challenges in Distributed WALs</strong></a></h3>
+<p>Distributed WALs are complex due to:</p>
+<div class="table-wrapper"><table><thead><tr><th>Challenge</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Network Partition</strong></td><td>Some nodes unreachable - consensus required</td></tr>
+<tr><td><strong>Clock Skew</strong></td><td>Causes misordered commits without proper synchronization</td></tr>
+<tr><td><strong>Log Divergence</strong></td><td>Crashed nodes may have partial logs</td></tr>
+<tr><td><strong>Rebalancing</strong></td><td>Moving shards = moving WAL ownership</td></tr>
+<tr><td><strong>Latency vs Consistency</strong></td><td>Global ordering can slow writes</td></tr>
+</tbody></table>
+</div>
+<p>Most systems balance these via tunable consistency levels.</p>
+<hr />
+<h3 id="15-visual-summary-layers-of-a-distributed-database"><a class="header" href="#15-visual-summary-layers-of-a-distributed-database"><strong>15. Visual Summary: Layers of a Distributed Database</strong></a></h3>
+<pre><code>          ┌───────────────────────────┐
+          │ Application / SQL Layer   │
+          └────────────┬──────────────┘
+                       │
+          ┌────────────▼──────────────┐
+          │ Transaction Coordinator   │
+          └────────────┬──────────────┘
+                       │
+          ┌────────────▼──────────────┐
+          │ Consensus / Raft Groups   │  → distributed WALs
+          └────────────┬──────────────┘
+                       │
+          ┌────────────▼──────────────┐
+          │ Local Storage Engines     │  → local WAL
+          └───────────────────────────┘
+</code></pre>
+<p>Each layer extends the previous one - from local WAL to global durability.</p>
+<hr />
+<h3 id="16-the-future-global-logs-beyond-databases"><a class="header" href="#16-the-future-global-logs-beyond-databases"><strong>16. The Future: Global Logs Beyond Databases</strong></a></h3>
+<p>The concept of WAL-based consensus isn’t limited to databases.
+Modern systems like <strong>Kafka</strong>, <strong>Pulsar</strong>, and <strong>Redpanda</strong> use distributed logs as their <em>primary abstraction</em>.</p>
+<ul>
+<li>Kafka topics = distributed WALs for event streaming</li>
+<li>Etcd = distributed WAL for configuration</li>
+<li>Temporal.io = distributed WAL for workflow state</li>
+</ul>
+<p>WAL has evolved from a recovery mechanism into a <strong>core synchronization primitive</strong> for the distributed world.</p>
+<hr />
+<h3 id="17-recap-the-journey-of-wal"><a class="header" href="#17-recap-the-journey-of-wal"><strong>17. Recap: The Journey of WAL</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Stage</th><th>Use of WAL</th></tr></thead><tbody>
+<tr><td><strong>Single Node</strong></td><td>Crash recovery</td></tr>
+<tr><td><strong>Replicated Cluster</strong></td><td>Log-based replication</td></tr>
+<tr><td><strong>Consensus System</strong></td><td>Agreement on log order</td></tr>
+<tr><td><strong>Distributed Database</strong></td><td>Coordinated global commit</td></tr>
+<tr><td><strong>Global Database</strong></td><td>Time-synchronized WAL ordering</td></tr>
+</tbody></table>
+</div>
+<p>From a humble recovery tool, WAL has become the <strong>heartbeat of distributed consistency</strong>.</p>
+<hr />
+<h3 id="18-closing-thoughts"><a class="header" href="#18-closing-thoughts"><strong>18. Closing Thoughts</strong></a></h3>
+<p>In distributed databases, WAL isn’t just a <em>local crash log</em> - it’s the <strong>unifying thread</strong> connecting:</p>
+<ul>
+<li>Replication</li>
+<li>Consensus</li>
+<li>Transactions</li>
+<li>Global ordering</li>
+</ul>
+<p>Each layer builds upon it to deliver <strong>durability, atomicity, and consistency</strong> across space and time.</p>
+<p>When you look at a distributed system, beneath the complex machinery of shards, leaders, clocks, and consensus, there is always one quiet hero -
+the <strong>Write-Ahead Log</strong>,
+faithfully recording the world, one entry at a time.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="ch14_raft.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="part5_advanced.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="ch14_raft.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="part5_advanced.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,737 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 7 : Concurrency and WAL</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chapter-7---concurrency-and-wal"><a class="header" href="#chapter-7---concurrency-and-wal">Chapter 7 - Concurrency and WAL</a></h1>
+<p>Concurrency is where correctness and performance collide. In a single-threaded toy WAL you can append records safely, but real systems must handle many concurrent transactions, background flushers, checkpointing, and possibly replication - all touching the WAL. This chapter explains practical, production-proven patterns and shows C# examples so you can experiment and reason about trade-offs.</p>
+<hr />
+<h2 id="71-core-concurrency-goals-for-a-wal"><a class="header" href="#71-core-concurrency-goals-for-a-wal">7.1 Core concurrency goals for a WAL</a></h2>
+<p>When multiple threads/processes interact with the WAL we want to ensure:</p>
+<ol>
+<li><strong>Atomicity of appends</strong> - a single log record must be written atomically (no interleaving bytes from different writers).</li>
+<li><strong>Ordering</strong> - the on-disk order of records must match the logical order of operations (or at least the order required to preserve correctness).</li>
+<li><strong>Durability semantics</strong> - when a transaction commits, the WAL strategy must ensure its durability guarantees (e.g., durable after fsync, or "probably durable" if async).</li>
+<li><strong>Performance</strong> - high throughput and acceptable latency under concurrency.</li>
+</ol>
+<p>These goals pull in opposite directions: stronger durability (fsync every commit) harms throughput; batching improves throughput but increases commit latency.</p>
+<hr />
+<h2 id="72-common-production-approaches-what-other-databases-do"><a class="header" href="#72-common-production-approaches-what-other-databases-do">7.2 Common production approaches (what other databases do)</a></h2>
+<p>Short survey - patterns used by real DBs:</p>
+<ul>
+<li>
+<p><strong>Single-writer + WAL writer thread</strong></p>
+<ul>
+<li><em>PostgreSQL</em> uses a WAL writer and a dedicated background process that helps flush WAL segments; the WAL insertion is serialized (though multiple backends can prepare WAL records, actual fsync/commit ordering is coordinated). Postgres implements <strong>group commit</strong> to batch multiple commits into a single fsync.</li>
+</ul>
+</li>
+<li>
+<p><strong>Group commit</strong></p>
+<ul>
+<li>Many DBs (Postgres, MySQL InnoDB via <code>innodb_flush_log_at_trx_commit</code> variations) accumulate commit requests and do a single fsync for several transactions - trading a bound on latency for much higher throughput.</li>
+</ul>
+</li>
+<li>
+<p><strong>Buffered/appender thread</strong></p>
+<ul>
+<li>A single thread accepts append requests (from other worker threads via a queue) and writes to disk, ensuring ordering and atomic writes while avoiding per-thread file locking cost.</li>
+</ul>
+</li>
+<li>
+<p><strong>Doublewrite / safe page writes</strong></p>
+<ul>
+<li><em>InnoDB</em> uses a doublewrite buffer to avoid torn page problems on partial page writes.</li>
+</ul>
+</li>
+<li>
+<p><strong>Force vs lazy flush</strong></p>
+<ul>
+<li>Some systems allow synchronous durability (<code>fsync</code> at commit) or relaxed modes where commits are acknowledged before <code>fsync</code> (risking data loss on crash).</li>
+</ul>
+</li>
+<li>
+<p><strong>Direct I/O / O_DSYNC / Write barriers</strong></p>
+<ul>
+<li>Low-level options to control caching and ordering for stronger guarantees.</li>
+</ul>
+</li>
+<li>
+<p><strong>Checksumming and LSNs</strong></p>
+<ul>
+<li>Records include LSNs and checksums; pages store page LSNs for idempotent Redo.</li>
+</ul>
+</li>
+<li>
+<p><strong>Segmented WAL + log shipping</strong></p>
+<ul>
+<li>WAL is layered into segments to allow safe rotation and replication (Postgres, Oracle).</li>
+</ul>
+</li>
+<li>
+<p><strong>LSM vs B-Tree differences</strong></p>
+<ul>
+<li>LSM-based systems (RocksDB) write WAL entries and keep memtables in memory; compaction and memtable flush strategies interact with WAL flushing.</li>
+</ul>
+</li>
+</ul>
+<p>We’ll use simplified patterns inspired by these techniques.</p>
+<hr />
+<h2 id="73-approach-1---simple-mutex-guarded-append-safe--easy"><a class="header" href="#73-approach-1---simple-mutex-guarded-append-safe--easy">7.3 Approach 1 - Simple mutex-guarded append (safe &amp; easy)</a></h2>
+<p>This is the simplest correct approach: a single lock around file writes. It’s easy to reason about and safe across threads, but it serializes writers and will limit throughput.</p>
+<pre><code class="language-csharp">// SimpleWAL.cs
+using System;
+using System.IO;
+using System.Text;
+using System.Threading;
+
+public class SimpleWAL : IDisposable
+{
+    private readonly FileStream _fs;
+    private readonly object _writeLock = new object();
+
+    public SimpleWAL(string path)
+    {
+        // FileOptions.WriteThrough reduces caching, but platform behavior varies.
+        _fs = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, FileOptions.WriteThrough);
+    }
+
+    // Append a single log entry and optionally flush to disk (durable if flush==true).
+    public void Append(string jsonRecord, bool flush = true)
+    {
+        var bytes = Encoding.UTF8.GetBytes(jsonRecord + "\n");
+        lock (_writeLock)
+        {
+            _fs.Write(bytes, 0, bytes.Length);
+            if (flush)
+            {
+                // Ensure persistence. On modern .NET, Flush(true) requests OS-level flush.
+                _fs.Flush(true); // flush metadata &amp; data to disk (may throw on unsupported platforms)
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _fs?.Dispose();
+    }
+}
+</code></pre>
+<p><strong>When to use:</strong> small systems, low concurrency, or as a reference implementation.
+<strong>Pros:</strong> trivial correctness.
+<strong>Cons:</strong> blocks all writers on IO latency.</p>
+<hr />
+<h2 id="74-approach-2---buffering--background-flusher-higher-throughput-tuned-durability"><a class="header" href="#74-approach-2---buffering--background-flusher-higher-throughput-tuned-durability">7.4 Approach 2 - Buffering + background flusher (higher throughput, tuned durability)</a></h2>
+<p>A more common production pattern: worker threads enqueue log entries into an in-memory queue; a single background thread drains the queue to disk (preserving order) and performs periodic or batched <code>fsync</code>s. This gives you high throughput and allows you to implement <strong>group commit</strong> cheaply.</p>
+<p>Key design points:</p>
+<ul>
+<li>Writers don't wait on disk I/O (reduced latency).</li>
+<li>Periodic flush or batch-on-commit allows many transactions to share one expensive <code>fsync</code>.</li>
+<li>You must decide when a caller is allowed to consider a transaction "committed" (before or after fsync).</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-csharp">// BufferedWAL.cs
+using System;
+using System.Collections.Concurrent;
+using System.IO;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class BufferedWAL : IDisposable
+{
+    private readonly BlockingCollection&lt;WalEntry&gt; _queue = new BlockingCollection&lt;WalEntry&gt;(new ConcurrentQueue&lt;WalEntry&gt;());
+    private readonly FileStream _fs;
+    private readonly Thread _flusherThread;
+    private readonly TimeSpan _flushInterval;
+    private volatile bool _running = true;
+
+    public BufferedWAL(string path, TimeSpan flushInterval)
+    {
+        _fs = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, FileOptions.None);
+        _flushInterval = flushInterval;
+        _flusherThread = new Thread(FlusherLoop) { IsBackground = true };
+        _flusherThread.Start();
+    }
+
+    public void Enqueue(string record, TaskCompletionSource&lt;bool&gt; tcs = null)
+    {
+        _queue.Add(new WalEntry { Record = record, Tcs = tcs });
+    }
+
+    // Call this for "fire-and-forget". For durability-on-commit you'd provide a TCS and await it.
+    public void Append(string jsonRecord)
+    {
+        Enqueue(jsonRecord);
+    }
+
+    // Caller can await this TCS to know when the record has been flushed to disk.
+    public Task CommitAsync(string jsonRecord)
+    {
+        var tcs = new TaskCompletionSource&lt;bool&gt;(TaskCreationOptions.RunContinuationsAsynchronously);
+        Enqueue(jsonRecord, tcs);
+        return tcs.Task;
+    }
+
+    private void FlusherLoop()
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var sb = new StringBuilder();
+        while (_running)
+        {
+            WalEntry entry;
+            // Block for a short time to gather entries.
+            if (_queue.TryTake(out entry, 50))
+            {
+                sb.AppendLine(entry.Record);
+                // drain any additional ready entries
+                while (_queue.TryTake(out entry))
+                {
+                    sb.AppendLine(entry.Record);
+                }
+                // write batch
+                var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+                _fs.Write(bytes, 0, bytes.Length);
+                _fs.Flush(true); // flush to disk (durability)
+                // mark committed entries
+                // (we would mark all enqueued TCS as completed; for brevity handle single entry)
+                // In a real impl, track list of TCS in the batch and set them true.
+                sb.Clear();
+            }
+            else
+            {
+                // Periodic flush in case small amount of data remains
+                if (sw.Elapsed &gt;= _flushInterval)
+                {
+                    // nothing to flush here in this simplified example
+                    sw.Restart();
+                }
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _running = false;
+        _queue.CompleteAdding();
+        _flusherThread.Join();
+        _fs?.Dispose();
+    }
+
+    class WalEntry
+    {
+        public string Record;
+        public TaskCompletionSource&lt;bool&gt; Tcs;
+    }
+}
+</code></pre>
+<p><strong>Durability note:</strong> The code above calls <code>_fs.Flush(true)</code> inside the background thread. If you want the caller to see a commit as durable only after fsync, use <code>CommitAsync</code> and complete the <code>TaskCompletionSource</code> only after flush completes. If you allow callers to proceed before flush, you adopt asynchronous durability (faster but riskier).</p>
+<p><strong>When to use:</strong> medium to high concurrency workloads, where batching yields better throughput.</p>
+<hr />
+<h2 id="75-approach-3---group-commit-how-postgres-and-others-batch-fsyncs"><a class="header" href="#75-approach-3---group-commit-how-postgres-and-others-batch-fsyncs">7.5 Approach 3 - Group commit (how Postgres and others batch fsyncs)</a></h2>
+<p><strong>Group commit</strong> is the strategy of batching multiple transaction commits into a single <code>fsync</code> call. The orchestrator collects transactions that want to commit, writes all related WAL records (or ensures they are in the buffer), then performs one <code>fsync</code>. All waiting transactions are then acknowledged as durable.</p>
+<p>This dramatically increases throughput because <code>fsync</code> is expensive.</p>
+<p>A tiny simulation (conceptual) of group commit in C#:</p>
+<pre><code class="language-csharp">// GroupCommitWAL.cs (conceptual)
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
+
+public class GroupCommitWAL : IDisposable
+{
+    private readonly FileStream _fs;
+    private readonly object _lock = new object();
+    private readonly List&lt;CommitRequest&gt; _pending = new List&lt;CommitRequest&gt;();
+    private readonly Timer _timer;
+
+    public GroupCommitWAL(string path, TimeSpan commitWindow)
+    {
+        _fs = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, FileOptions.None);
+        // Timer ticks to trigger grouped commits periodically
+        _timer = new Timer(_ =&gt; FlushGroup(), null, commitWindow, commitWindow);
+    }
+
+    public void Commit(string walRecord)
+    {
+        var req = new CommitRequest { Record = walRecord, Completed = new ManualResetEventSlim(false) };
+        lock (_lock)
+        {
+            _pending.Add(req);
+        }
+        // Wait until group flush completes (durable commit)
+        req.Completed.Wait();
+    }
+
+    private void FlushGroup()
+    {
+        List&lt;CommitRequest&gt; toFlush;
+        lock (_lock)
+        {
+            if (_pending.Count == 0) return;
+            toFlush = new List&lt;CommitRequest&gt;(_pending);
+            _pending.Clear();
+        }
+
+        // Write all records in one batch
+        var sb = new StringBuilder();
+        foreach (var r in toFlush) sb.AppendLine(r.Record);
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        lock (_fs) // file write must be atomic wrt other file operations
+        {
+            _fs.Write(bytes, 0, bytes.Length);
+            _fs.Flush(true); // one fsync for many commits
+        }
+
+        // Signal all waiting commits that their work is durable
+        foreach (var r in toFlush) r.Completed.Set();
+    }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+        FlushGroup();
+        _fs.Dispose();
+    }
+
+    private class CommitRequest
+    {
+        public string Record;
+        public ManualResetEventSlim Completed;
+    }
+}
+</code></pre>
+<p><strong>Real systems:</strong> Postgres uses a similar idea but with finer control: backends call <code>XLogInsert</code> to add WAL records, then to commit they wait for the WAL to be flushed (or use async commit options). The WAL writer coordinates the flush and wakes the waiting backends.</p>
+<p><strong>Pros:</strong> much higher throughput under many small transactions.
+<strong>Cons:</strong> increases worst-case commit latency by up to the group window; more complex coordination.</p>
+<hr />
+<h2 id="76-durability-modes-and-configuration-knobs"><a class="header" href="#76-durability-modes-and-configuration-knobs">7.6 Durability modes and configuration knobs</a></h2>
+<p>Databases expose knobs controlling durability behavior; common choices:</p>
+<ul>
+<li><strong>Synchronous commit</strong> (force WAL to disk before returning commit) - safest; highest latency.</li>
+<li><strong>Asynchronous commit</strong> (ack before fsync) - fastest; risk of losing recent commits on crash.</li>
+<li><strong>Group commit window</strong> - time to wait to aggregate commit requests.</li>
+<li><strong>Periodic flush</strong> - flush WAL every X ms for a compromise.</li>
+<li><strong>O_DSYNC / O_DIRECT / fdatasync</strong> - lower-level flags to control caching and metadata flushes.</li>
+</ul>
+<p><strong>Examples in real DBs:</strong></p>
+<ul>
+<li><em>Postgres</em>: <code>synchronous_commit</code> can be on/off/local, and Postgres does group commit internally.</li>
+<li><em>InnoDB (MySQL)</em>: <code>innodb_flush_log_at_trx_commit</code> = 1 (fsync per commit), 2 (flush to OS buffer but not fsync), 0 (flush every second).</li>
+<li><em>SQLite</em>: can run in WAL mode (append-only WAL file) or rollback journal; durability also depends on <code>PRAGMA synchronous</code>.</li>
+</ul>
+<hr />
+<h2 id="77-handling-tornwritten-partial-pages--atomicity"><a class="header" href="#77-handling-tornwritten-partial-pages--atomicity">7.7 Handling torn/written partial pages &amp; atomicity</a></h2>
+<p>Disk writes may be torn (part of a page persisted). Production systems guard against partial writes:</p>
+<ul>
+<li><strong>Doublewrite buffer</strong> (MySQL InnoDB): write pages first to a contiguous doublewrite area, then to final locations. If a crash causes torn writes, pages can be recovered from the doublewrite area.</li>
+<li><strong>Checksums + page LSN</strong>: pages include LSN and checksum; corrupted pages detected during recovery and skipped/rewritten.</li>
+<li><strong>Atomic append for WAL</strong>: appending small WAL records is typically atomic from the file system perspective if the writes are smaller than the atomic write size - but you should not rely on this; instead, rely on WAL + checksums and redo logic.</li>
+</ul>
+<hr />
+<h2 id="78-concurrency-and-recovery-interactions"><a class="header" href="#78-concurrency-and-recovery-interactions">7.8 Concurrency and recovery interactions</a></h2>
+<p>Concurrency complicates recovery: while WAL is append-only, workers may reorder actions in memory. Two important invariants:</p>
+<ul>
+<li><strong>Write-Ahead Principle:</strong> WAL record for a change must be durable before the change is made durable in the data file (or before transaction is committed). This is why WAL flush ordering is critical.</li>
+<li><strong>Page LSN checks during redo:</strong> When reapplying log entries during recovery, databases compare the record LSN against the page’s stored LSN (in-page metadata) to decide whether to reapply - this makes redo idempotent.</li>
+</ul>
+<p>When using background flushers, group commit, or batching, ensure that the code that acknowledges commit to the application only does that after the WAL has been persisted according to the chosen durability level.</p>
+<hr />
+<h2 id="79-advanced-optimizations-overview"><a class="header" href="#79-advanced-optimizations-overview">7.9 Advanced optimizations (overview)</a></h2>
+<ul>
+<li><strong>Batch &amp; vectorized writes</strong>: accumulating many small records into a bigger write reduces syscall overhead.</li>
+<li><strong>Per-thread WAL buffers merged by a writer</strong>: Threads append into thread-local buffers, then merged in order by a single writer with sequence numbers.</li>
+<li><strong>LSN allocation vs persistence ordering</strong>: Assign LSNs in-memory quickly, but ensure the physical disk order reflects necessary constraints (LSNs are logical; recovery relies on LSN semantics).</li>
+<li><strong>Partitioned WAL</strong>: split WAL into segments (log files) to rotate, compress, and ship for replication (e.g., Postgres WAL segments).</li>
+<li><strong>Direct I/O &amp; aligned writes</strong>: reduce kernel cache effects and torn writes, but increases complexity (alignment, buffering).</li>
+</ul>
+<hr />
+<h2 id="710-full-illustrative-sample---wal-writer-with-background-flusher--commit-acknowledgements-c"><a class="header" href="#710-full-illustrative-sample---wal-writer-with-background-flusher--commit-acknowledgements-c">7.10 Full illustrative sample - WAL writer with background flusher + commit acknowledgements (C#)</a></h2>
+<p>Below is a more fleshed-out sample: workers submit WAL records with a <code>Task</code> they can await for durability. The background flusher groups pending records and performs one <code>Flush</code> (fsync) for the group. This simulates group commit in a simple way.</p>
+<pre><code class="language-csharp">// GroupedBufferedWAL.cs
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class GroupedBufferedWAL : IDisposable
+{
+    private readonly FileStream _fs;
+    private readonly BlockingCollection&lt;WalRequest&gt; _queue = new BlockingCollection&lt;WalRequest&gt;(new ConcurrentQueue&lt;WalRequest&gt;());
+    private readonly Thread _flusher;
+    private readonly int _maxBatchSize;
+    private readonly TimeSpan _maxWait;
+
+    public GroupedBufferedWAL(string path, int maxBatchSize = 64, TimeSpan? maxWait = null)
+    {
+        _fs = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read, 8192, FileOptions.None);
+        _maxBatchSize = Math.Max(1, maxBatchSize);
+        _maxWait = maxWait ?? TimeSpan.FromMilliseconds(10);
+
+        _flusher = new Thread(FlushLoop) { IsBackground = true };
+        _flusher.Start();
+    }
+
+    // Returns a Task that completes when the record is flushed (durable).
+    public Task AppendAsync(string record)
+    {
+        var req = new WalRequest { Record = record, Tcs = new TaskCompletionSource&lt;bool&gt;(TaskCreationOptions.RunContinuationsAsynchronously) };
+        _queue.Add(req);
+        return req.Tcs.Task;
+    }
+
+    private void FlushLoop()
+    {
+        var batch = new List&lt;WalRequest&gt;(_maxBatchSize);
+        while (!_queue.IsCompleted)
+        {
+            try
+            {
+                WalRequest first;
+                if (!_queue.TryTake(out first, (int)_maxWait.TotalMilliseconds))
+                {
+                    // timed out - if we have something in batch, flush it
+                    if (batch.Count &gt; 0)
+                    {
+                        DoFlush(batch);
+                        batch.Clear();
+                    }
+                    continue;
+                }
+
+                batch.Add(first);
+
+                // collect up to maxBatchSize quickly
+                while (batch.Count &lt; _maxBatchSize &amp;&amp; _queue.TryTake(out var r))
+                {
+                    batch.Add(r);
+                }
+
+                DoFlush(batch);
+                batch.Clear();
+            }
+            catch (Exception ex)
+            {
+                // in production you'd have robust error handling and retry logic
+                Console.Error.WriteLine("FlushLoop error: " + ex);
+            }
+        }
+
+        // flush remaining
+        if (batch.Count &gt; 0) DoFlush(batch);
+    }
+
+    private void DoFlush(List&lt;WalRequest&gt; batch)
+    {
+        // Build a single write for the whole batch
+        var sb = new StringBuilder();
+        foreach (var r in batch) sb.AppendLine(r.Record);
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+
+        lock (_fs) // serialize file writes with the file handle
+        {
+            _fs.Write(bytes, 0, bytes.Length);
+            _fs.Flush(true); // ask OS to persist to stable storage
+        }
+
+        // mark all tasks as completed (durable)
+        foreach (var r in batch) r.Tcs.TrySetResult(true);
+    }
+
+    public void Dispose()
+    {
+        _queue.CompleteAdding();
+        _flusher.Join();
+        _fs.Dispose();
+    }
+
+    private class WalRequest
+    {
+        public string Record;
+        public TaskCompletionSource&lt;bool&gt; Tcs;
+    }
+}
+</code></pre>
+<p><strong>How to use:</strong></p>
+<pre><code class="language-csharp">var wal = new GroupedBufferedWAL("wal.log", maxBatchSize: 128, maxWait: TimeSpan.FromMilliseconds(5));
+
+async Task Worker(int id)
+{
+    for (int i = 0; i &lt; 10; i++)
+    {
+        string rec = $"{{\"lsn\":null,\"txn\":{id},\"seq\":{i},\"payload\":\"data\"}}";
+        await wal.AppendAsync(rec); // returns when durable (fsynced) as implemented
+        Console.WriteLine($"Worker {id} committed {i}");
+    }
+}
+
+var tasks = new List&lt;Task&gt;();
+for (int w = 0; w &lt; 8; w++) tasks.Add(Worker(w));
+Task.WaitAll(tasks.ToArray());
+wal.Dispose();
+</code></pre>
+<p>This yields high throughput and provides a per-transaction durability <code>Task</code> that resolves after the group <code>fsync</code>.</p>
+<hr />
+<h2 id="711-trade-offs-recap"><a class="header" href="#711-trade-offs-recap">7.11 Trade-offs recap</a></h2>
+<ul>
+<li><strong>Lock-per-append</strong>: simple, correct, low concurrency. Good for small systems.</li>
+<li><strong>Buffered flusher</strong>: better throughput, supports multiple writers without blocking on IO, but requires careful handling to provide correctness when callers need synchronous durability.</li>
+<li><strong>Group commit</strong>: excellent throughput for many small commits; increases commit latency up to the group window.</li>
+<li><strong>Doublewrite / checksums</strong>: required when page-level atomicity is a concern.</li>
+<li><strong>Direct I/O / OS flags</strong>: can increase durability semantics but complicate code (alignment, buffering).</li>
+<li><strong>Crash correctness guarantee</strong>: must preserve WAL ordering, ensure write-ahead property, and implement predictable recovery semantics (redo/undo with page LSN checks).</li>
+</ul>
+<hr />
+<h2 id="712-practical-recommendations"><a class="header" href="#712-practical-recommendations">7.12 Practical recommendations</a></h2>
+<ul>
+<li>Start simple: use a mutex-guarded append for correctness early in development.</li>
+<li>If you need throughput, move to an async buffered writer - implement <code>AppendAsync</code> that gives callers a <code>Task</code> when their entry is durable.</li>
+<li>Implement <strong>group commit</strong> semantics if many small transactions dominate your workload.</li>
+<li>Make durability configurable (sync vs async) so you can tune for latency vs throughput.</li>
+<li>Add checksums and LSNs to WAL records and store page LSNs to make redo idempotent.</li>
+<li>Test crash scenarios: simulate crashes at many points and validate recovery.</li>
+</ul>
+<hr />
+<h2 id="713-summary"><a class="header" href="#713-summary">7.13 Summary</a></h2>
+<p>Concurrency is the "real world" requirement for any WAL-backed storage engine. The key is deciding the right mix of guarantees and performance for your use case:</p>
+<ul>
+<li>If correctness and strong durability are critical, prefer synchronous commits and conservative flushes.</li>
+<li>If throughput with acceptable bounded durability is acceptable, use group commit or periodic flush.</li>
+<li>Mirror patterns used by mature systems (group commit in Postgres, InnoDB's doublewrite and flush controls, RocksDB's WAL + memtable flushing) to avoid common pitfalls.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="ch6_checkpoint.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch8_rust_project.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="ch6_checkpoint.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch8_rust_project.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

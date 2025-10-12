@@ -1,0 +1,399 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Chapter 1 : Introduction to Data Durability</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="intro-to-data-durability"><a class="header" href="#intro-to-data-durability">Intro to Data Durability</a></h1>
+<h2 id="the-data-behind-everyday-applications"><a class="header" href="#the-data-behind-everyday-applications">The Data Behind Everyday Applications</a></h2>
+<p>Every day, we interact with dozens of applications that silently manage and store our data - from social media platforms and email clients to banking apps and cloud drives.
+When you:</p>
+<ul>
+<li>Send a message on WhatsApp,</li>
+<li>Save a photo to Google Photos,</li>
+<li>Stream a playlist on Spotify, or</li>
+<li>Check your balance on a banking app,</li>
+</ul>
+<p>you’re relying on a massive network of servers and databases to <strong>store and retrieve your data reliably</strong>.</p>
+<p>This data isn’t trivial - it represents our:</p>
+<ul>
+<li><strong>Personal memories</strong> (photos, messages, notes),</li>
+<li><strong>Financial records</strong> (transactions, bills, receipts),</li>
+<li><strong>Business assets</strong> (customer data, analytics, and product information), and</li>
+<li><strong>System states</strong> (user sessions, cache, logs, etc.).</li>
+</ul>
+<p>Losing this data can be catastrophic - imagine a bank losing transaction records or a social platform losing years of messages.
+That’s why <strong>data durability</strong> is one of the most critical guarantees that storage systems and databases strive to achieve.</p>
+<hr />
+<h2 id="what-is-durability"><a class="header" href="#what-is-durability">What Is Durability?</a></h2>
+<h3 id="general-definition"><a class="header" href="#general-definition"><strong>General Definition</strong></a></h3>
+<p><strong>Durability</strong> refers to the <strong>ability of a system to preserve information even in the face of failures</strong> - such as crashes, power loss, or hardware damage.</p>
+<p>In simple terms:</p>
+<blockquote>
+<p>Once data is written and confirmed as “saved,” it should <strong>never disappear</strong> unexpectedly.</p>
+</blockquote>
+<p>For example, if you write a document and click “Save,” you expect that file to still exist tomorrow, even if your computer restarts or the application crashes.</p>
+<h3 id="importance-of-durability"><a class="header" href="#importance-of-durability"><strong>Importance of Durability</strong></a></h3>
+<p>Durability is not just a technical property - it’s a <strong>promise of trust</strong> between the system and its users:</p>
+<ul>
+<li>It ensures that <strong>once a transaction is complete</strong>, it will remain intact.</li>
+<li>It allows systems to <strong>recover from crashes</strong> without losing state.</li>
+<li>It forms one of the key pillars of the <strong>ACID</strong> properties in databases (Atomicity, Consistency, Isolation, <strong>Durability</strong>).</li>
+</ul>
+<p>Without durability, all other guarantees collapse - a perfectly consistent and atomic system means little if it forgets its data after a reboot.</p>
+<hr />
+<h2 id="durability-in-storage-and-databases"><a class="header" href="#durability-in-storage-and-databases">Durability in Storage and Databases</a></h2>
+<p>To understand durability in databases, we must look at how computers store data at different layers.</p>
+<h3 id="volatile-vs-non-volatile-storage"><a class="header" href="#volatile-vs-non-volatile-storage"><strong>Volatile vs Non-Volatile Storage</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Type</th><th>Description</th><th>Example</th><th>Durability</th></tr></thead><tbody>
+<tr><td><strong>Volatile Storage</strong></td><td>Loses data when power is lost</td><td>RAM (Random Access Memory)</td><td>Not durable</td></tr>
+<tr><td><strong>Non-Volatile Storage</strong></td><td>Persists data even after power loss</td><td>SSDs, Hard Drives, Flash Storage</td><td>Durable</td></tr>
+</tbody></table>
+</div>
+<p>When you run a database query or modify a record, the changes first happen in <strong>memory (RAM)</strong> for speed. But memory is volatile - if the machine crashes before changes reach disk, data is lost.</p>
+<p>Therefore, databases must ensure that <strong>critical data is safely written to durable storage (disk or SSD)</strong> before confirming a successful operation.</p>
+<hr />
+<h1 id="how-computers-lose-data"><a class="header" href="#how-computers-lose-data">How Computers Lose Data</a></h1>
+<p>Even the most powerful computers and databases are vulnerable to one simple truth:
+<strong>hardware and software can fail.</strong></p>
+<p>To understand why durability is so important - and how techniques like Write-Ahead Logging (WAL) were invented - we first need to see <em>how</em> computers actually lose data.</p>
+<hr />
+<h2 id="1-the-fragile-path-of-data"><a class="header" href="#1-the-fragile-path-of-data">1. The Fragile Path of Data</a></h2>
+<p>When an application writes data - say, saving a user’s profile or recording a transaction - that data travels through several layers before reaching permanent storage:</p>
+<pre><code>Application → Database Engine → OS Cache → Disk Controller → Disk/SSD
+</code></pre>
+<p>Each layer plays a role in speed and reliability, but also introduces <strong>points of failure</strong>.</p>
+<p>Let’s see what can go wrong.</p>
+<hr />
+<h2 id="2-common-causes-of-data-loss"><a class="header" href="#2-common-causes-of-data-loss">2. Common Causes of Data Loss</a></h2>
+<h3 id="a-power-failures"><a class="header" href="#a-power-failures"><strong>a. Power Failures</strong></a></h3>
+<p>Power outages or system crashes can occur at any moment - even in the middle of a write.</p>
+<p>If data is still in <strong>volatile memory (RAM)</strong> or <strong>OS buffers</strong>, it disappears instantly when power is lost.</p>
+<blockquote>
+<p>Example:
+A database acknowledges a successful write, but the data never made it from cache to disk. After reboot, the record is gone.</p>
+</blockquote>
+<p>This is why true durability requires <strong>flushing writes to non-volatile storage</strong> and verifying that the data has been persisted.</p>
+<hr />
+<h3 id="b-software-crashes"><a class="header" href="#b-software-crashes"><strong>b. Software Crashes</strong></a></h3>
+<p>Applications and databases are complex. A crash during write operations can leave files <strong>partially written</strong> or <strong>corrupted</strong>.</p>
+<p>For example:</p>
+<ul>
+<li>A database might crash midway through updating an index.</li>
+<li>File metadata may be inconsistent, leaving “dangling” data blocks.</li>
+</ul>
+<p>Such <strong>inconsistent states</strong> make recovery difficult - unless the system maintains an ordered log of what was being done (hint: WAL helps here).</p>
+<hr />
+<h3 id="c-hardware-failures"><a class="header" href="#c-hardware-failures"><strong>c. Hardware Failures</strong></a></h3>
+<p>Disks and SSDs, despite their reliability, <strong>wear out</strong> over time.</p>
+<ul>
+<li>Hard disks can develop <strong>bad sectors</strong> or <strong>head crashes</strong>.</li>
+<li>SSDs have <strong>limited write cycles</strong> and can suffer from controller failures.</li>
+</ul>
+<p>If data is stored on a single disk with no replication, its loss may be <strong>irrecoverable</strong>.</p>
+<p>Modern systems counter this with:</p>
+<ul>
+<li>RAID configurations,</li>
+<li>Replication to multiple nodes, and</li>
+<li>Checksums to detect bit rot or silent corruption.</li>
+</ul>
+<hr />
+<h3 id="d-operating-system-or-file-system-errors"><a class="header" href="#d-operating-system-or-file-system-errors"><strong>d. Operating System or File System Errors</strong></a></h3>
+<p>Even if hardware works fine, <strong>file systems</strong> (like NTFS, ext4, or APFS) can introduce risk:</p>
+<ul>
+<li>The OS might reorder or batch writes for performance.</li>
+<li>Filesystem journaling might not complete before a crash.</li>
+<li>Metadata (like directory entries) may get corrupted.</li>
+</ul>
+<p>When this happens, data might physically exist on disk but be <strong>logically inaccessible</strong>.</p>
+<hr />
+<h3 id="e-human-error"><a class="header" href="#e-human-error"><strong>e. Human Error</strong></a></h3>
+<p>Not all failures are mechanical.
+Developers and administrators also delete, overwrite, or misconfigure systems accidentally.</p>
+<p>Examples:</p>
+<ul>
+<li>Running <code>rm -rf /data</code> on the wrong server.</li>
+<li>Misapplying a database migration.</li>
+<li>Restoring from an outdated backup.</li>
+</ul>
+<p>Human mistakes are among the <strong>most frequent causes</strong> of data loss - and durability mechanisms can only help if changes are logged before they’re lost.</p>
+<hr />
+<h2 id="3-data-corruption-the-silent-enemy"><a class="header" href="#3-data-corruption-the-silent-enemy">3. Data Corruption: The Silent Enemy</a></h2>
+<p>Sometimes, data doesn’t vanish - it <strong>changes silently</strong>.
+Corruption can happen due to:</p>
+<ul>
+<li>Bit flips caused by cosmic radiation or faulty RAM,</li>
+<li>Disk write interruptions,</li>
+<li>Transmission errors across hardware buses.</li>
+</ul>
+<p>The danger is that these errors might <strong>go undetected for months</strong> until a read operation fails.
+Databases therefore use <strong>checksums</strong> and <strong>redundant copies</strong> to detect and repair corruption early.</p>
+<hr />
+<h2 id="how-durability-mechanisms-protect-against-loss"><a class="header" href="#how-durability-mechanisms-protect-against-loss">How Durability Mechanisms Protect Against Loss</a></h2>
+<p>Let’s revisit the durability techniques introduced earlier - now through the lens of failure scenarios:</p>
+<div class="table-wrapper"><table><thead><tr><th>Failure Type</th><th>Without Durability</th><th>With WAL/Durable Design</th></tr></thead><tbody>
+<tr><td>Power Loss</td><td>Incomplete writes lost</td><td>Changes logged before crash; can replay after reboot</td></tr>
+<tr><td>Crash During Update</td><td>Corrupted data</td><td>Atomic recovery using log</td></tr>
+<tr><td>Disk Failure</td><td>Data gone</td><td>Replication or backup recovers state</td></tr>
+<tr><td>Software Bug</td><td>Inconsistent state</td><td>Logs enable rollback or reapply</td></tr>
+<tr><td>Human Error</td><td>Permanent deletion</td><td>Point-in-time recovery via logs</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="the-limits-of-durability"><a class="header" href="#the-limits-of-durability">The Limits of Durability</a></h2>
+<p>No system can promise <strong>absolute</strong> durability - disks fail, data centers burn, and bugs slip through.
+However, systems aim for <strong>practical durability</strong>, often expressed as:</p>
+<blockquote>
+<p><em>“The probability of data loss is less than 1 in 10¹⁵ writes.”</em></p>
+</blockquote>
+<p>In practice, this means data is:</p>
+<ul>
+<li>Written to <strong>durable media</strong> (disk/SSD),</li>
+<li>Logged before application,</li>
+<li>Replicated across machines or regions,</li>
+<li>Verified with checksums, and</li>
+<li>Periodically backed up.</li>
+</ul>
+<p>These layers together form a <strong>defense-in-depth</strong> strategy against data loss.</p>
+<hr />
+<h2 id="setting-the-stage-for-write-ahead-logging"><a class="header" href="#setting-the-stage-for-write-ahead-logging">Setting the Stage for Write-Ahead Logging</a></h2>
+<p>Write-Ahead Logging was designed as a <strong>structured response</strong> to the chaos of system failures.
+It ensures that <strong>every change is recorded in a durable log before modifying the main data</strong>, allowing systems to recover exactly where they left off.</p>
+<p>In essence:</p>
+<blockquote>
+<p><em>If computers can lose data at any moment, WAL ensures they can always find their way back.</em></p>
+</blockquote>
+<p>In the next chapter, we’ll dive into <strong>the core idea and key principles of Write-Ahead Logging</strong> - how it works, why it’s fast despite being durable, and how databases like PostgreSQL, SQLite, and RocksDB rely on it every second.</p>
+<hr />
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="part1_intro.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch2_core_idea.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="part1_intro.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch2_core_idea.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

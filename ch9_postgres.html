@@ -1,0 +1,442 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>PostgreSQL WAL</title>
+
+
+        <!-- Custom HTML head -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KVDQ13RXMY"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KVDQ13RXMY');
+</script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="chapter-9--postgresql-wal"><a class="header" href="#chapter-9--postgresql-wal">Chapter 9 : PostgreSQL WAL</a></h1>
+<h3 id="inside-postgresqls-write-ahead-log-design-implementation-and-recovery"><a class="header" href="#inside-postgresqls-write-ahead-log-design-implementation-and-recovery"><em>Inside PostgreSQL’s Write-Ahead Log: Design, Implementation, and Recovery</em></a></h3>
+<hr />
+<h2 id="1-introduction---wal-at-the-heart-of-postgresql"><a class="header" href="#1-introduction---wal-at-the-heart-of-postgresql">1. Introduction - WAL at the Heart of PostgreSQL</a></h2>
+<p>When PostgreSQL promises that a committed transaction will never vanish-even after a crash-it’s the <strong>Write-Ahead Log (WAL)</strong> that makes that promise possible.
+Every change in PostgreSQL passes through this append-only log before it ever touches the main data files.</p>
+<p>In the PostgreSQL source tree, the WAL subsystem lives primarily under
+<code>src/backend/access/transam/</code> and headers under <code>src/include/access/</code>.
+If you ever browse the repo (<a href="https://github.com/postgres/postgres">github.com/postgres/postgres</a>), files like
+<code>xlog.c</code>, <code>xlogrecovery.c</code>, and <code>walwriter.c</code> are the main entry points.</p>
+<p>Official documentation:</p>
+<ul>
+<li><a href="https://www.postgresql.org/docs/current/wal-intro.html">WAL Introduction</a></li>
+<li><a href="https://www.postgresql.org/docs/current/wal-internals.html">WAL Internals</a></li>
+<li><a href="https://www.postgresql.org/docs/current/continuous-archiving.html">Continuous Archiving and PITR</a></li>
+</ul>
+<hr />
+<h2 id="2-architecture-overview"><a class="header" href="#2-architecture-overview">2. Architecture Overview</a></h2>
+<p>PostgreSQL uses a <strong>multiprocess</strong> model-each client connection runs in its own process. WAL management therefore depends on shared memory and a few cooperating background processes:</p>
+<div class="table-wrapper"><table><thead><tr><th>Process</th><th>Responsibility</th></tr></thead><tbody>
+<tr><td><strong>Backend</strong></td><td>Executes queries and inserts WAL records for each change.</td></tr>
+<tr><td><strong>WAL Writer</strong></td><td>Periodically flushes WAL buffers to disk, offloading I/O from backends.</td></tr>
+<tr><td><strong>Background Writer</strong></td><td>Writes dirty data pages from shared buffers to data files.</td></tr>
+<tr><td><strong>Checkpointer</strong></td><td>Creates checkpoints, ensuring pages up to a certain LSN are on disk.</td></tr>
+<tr><td><strong>Archiver / WAL Sender</strong></td><td>Ships WAL segments to replicas or archives.</td></tr>
+</tbody></table>
+</div>
+<p>The high-level flow looks like this:</p>
+<pre><code>Client SQL  → Backend modifies buffers
+             → XLogInsert() creates WAL record
+             → WAL buffer appended
+             → WAL Writer flushes to segment file
+             → Checkpoint ensures data pages persist
+</code></pre>
+<p>All WAL-related files live under <code>pg_wal/</code> in the data directory. Each file (a <em>segment</em>) is 16 MB by default and named like <code>00000001000000000000000A</code>.</p>
+<hr />
+<h2 id="3-wal-record-structure--lsns"><a class="header" href="#3-wal-record-structure--lsns">3. WAL Record Structure &amp; LSNs</a></h2>
+<p>Every operation that changes data generates one or more <strong>WAL records</strong>.
+The core structure, defined in <code>xlogrecord.h</code>, contains:</p>
+<pre><code class="language-c">typedef struct XLogRecord {
+    uint32  xl_tot_len;   /* total record length */
+    TransactionId xl_xid; /* transaction id */
+    XLogRecPtr xl_prev;   /* pointer to previous record */
+    uint8   xl_info;      /* record type flags */
+    RmgrId  xl_rmid;      /* resource manager id */
+    /* followed by record-specific data */
+} XLogRecord;
+</code></pre>
+<p>PostgreSQL assigns each byte in the WAL a <strong>Log Sequence Number (LSN)</strong> - a 64-bit pointer displayed as two hex parts (<code>0/16B3C1F0</code>).
+Every data page stores the LSN of its last update in its header.
+During recovery, WAL records are applied only if their LSN &gt; page LSN, guaranteeing idempotent replay.</p>
+<p>LSNs are returned by SQL functions like:</p>
+<pre><code class="language-sql">SELECT pg_current_wal_lsn();
+SELECT pg_last_wal_replay_lsn();
+</code></pre>
+<hr />
+<h2 id="4-inserting-and-flushing-wal"><a class="header" href="#4-inserting-and-flushing-wal">4. Inserting and Flushing WAL</a></h2>
+<p>When a backend modifies a page, it calls <code>XLogInsert()</code> to write a WAL record into a circular buffer in shared memory (the <em>WAL buffers</em>).
+Space reservation and LSN assignment are protected by lightweight locks to serialize writers.</p>
+<p>Simplified flow (adapted from <code>xlog.c</code>):</p>
+<pre><code class="language-c">/* Pseudocode illustration */
+XLogRecPtr XLogInsert(rmid, info, data)
+{
+    acquire(WALInsertLock);
+    LSN start = InsertPos;
+    InsertPos += sizeof(XLogRecord) + data_length;
+    release(WALInsertLock);
+
+    fill_record_header(...);
+    copy_payload_into_wal_buffer(...);
+    return start;
+}
+</code></pre>
+<p>Backends don’t usually write WAL to disk themselves.
+Instead, they signal that their commit’s LSN must be flushed, and either the <strong>WAL Writer</strong> or one backend performing a commit will call <code>XLogFlush()</code>:</p>
+<pre><code class="language-c">void XLogFlush(LSN target)
+{
+    if (WalWriterFlushPos &gt;= target)
+        return;
+    acquire(WALFlushLock);
+    write_wal_buffers_to_disk(up_to=target);
+    fsync(wal_segment_file);
+    WalWriterFlushPos = target;
+    release(WALFlushLock);
+}
+</code></pre>
+<p>This batching amortizes costly <code>fsync()</code> calls and allows many commits to share the same disk flush.</p>
+<hr />
+<h2 id="5-checkpointing-and-background-processes"><a class="header" href="#5-checkpointing-and-background-processes">5. Checkpointing and Background Processes</a></h2>
+<p>A <strong>checkpoint</strong> marks a moment when all changes up to a given LSN are safely on disk.
+During a checkpoint, PostgreSQL:</p>
+<ol>
+<li>Requests the WAL Writer to flush WAL up to the checkpoint LSN.</li>
+<li>Forces all dirty buffers whose page LSN ≤ that LSN to disk.</li>
+<li>Writes a <em>checkpoint record</em> into WAL describing the redo start point.</li>
+<li>Updates <code>pg_control</code> with the new checkpoint pointer.</li>
+</ol>
+<p>Simplified flow (modeled after <code>checkpointer.c</code>):</p>
+<pre><code class="language-c">CheckPoint()
+{
+    LSN redo = ComputeRedoStart();
+    RequestXLogFlush(redo);
+    FlushDirtyBuffers(redo);
+    XLogInsert(RM_XLOG_ID, XLOG_CHECKPOINT_ONLINE, ...);
+    XLogFlush(...);
+    UpdateControlFile(redo);
+}
+</code></pre>
+<p>Checkpoints keep recovery time bounded but introduce heavy I/O bursts, so PostgreSQL spreads them over time using <code>checkpoint_completion_target</code>.</p>
+<p>Old segments before the checkpoint are either archived (via <code>archive_command</code>) or recycled for reuse, depending on configuration.</p>
+<hr />
+<h2 id="6-recovery-and-replay"><a class="header" href="#6-recovery-and-replay">6. Recovery and Replay</a></h2>
+<p>On startup, PostgreSQL inspects <code>pg_control</code> to find the last checkpoint.
+If the previous shutdown wasn’t clean, it enters <strong>crash recovery</strong> mode.</p>
+<p>Recovery algorithm (simplified from <code>xlogrecovery.c</code>):</p>
+<ol>
+<li>
+<p>Read the checkpoint record; get its <em>redo LSN</em>.</p>
+</li>
+<li>
+<p>From that point, sequentially read WAL records.</p>
+</li>
+<li>
+<p>For each record:</p>
+<ul>
+<li>Identify the resource manager (<code>rmgr</code>) responsible.</li>
+<li>If the target page’s LSN &lt; record LSN, apply the redo function.</li>
+<li>Update the page’s LSN.</li>
+</ul>
+</li>
+<li>
+<p>Stop at the end of WAL or at a requested PITR target.</p>
+</li>
+</ol>
+<p>Each record type has a dedicated redo callback (see <code>src/backend/access/rmgr/</code> for modules like <code>heapam</code>, <code>btree</code>, <code>gin</code>, etc.) implementing <code>rm_redo()</code>.</p>
+<p>During replay, PostgreSQL can branch timelines: when a standby is promoted, it starts a new timeline file (<code>00000002.history</code>) recording ancestry-vital for point-in-time recovery and replication consistency.</p>
+<hr />
+<h2 id="7-concurrency-and-design-trade-offs"><a class="header" href="#7-concurrency-and-design-trade-offs">7. Concurrency and Design Trade-offs</a></h2>
+<p>PostgreSQL’s WAL design balances <em>simplicity</em> with <em>safety</em>:</p>
+<ul>
+<li><strong>Append-only design</strong> makes inserts fast and serializable with simple locks.</li>
+<li><strong>WAL Writer batching</strong> reduces fsync overhead.</li>
+<li><strong>Full-page writes</strong> (entire page images logged when first modified after a checkpoint) prevent torn-page corruption.</li>
+<li><strong>Checkpoints</strong> trade off runtime I/O vs. recovery duration.</li>
+<li><strong>Multiprocess architecture</strong> avoids complex thread safety issues but relies heavily on shared memory coordination.</li>
+</ul>
+<h3 id="observed-trade-offs"><a class="header" href="#observed-trade-offs">Observed trade-offs</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Goal</th><th>Challenge</th><th>Mitigation</th></tr></thead><tbody>
+<tr><td>Low latency commits</td><td>fsync cost</td><td>Group commits via WAL Writer</td></tr>
+<tr><td>Quick recovery</td><td>Frequent checkpoints</td><td>Spread checkpoint I/O</td></tr>
+<tr><td>Small WAL size</td><td>full_page_writes expansion</td><td>Optional compression / tuning</td></tr>
+<tr><td>Replication lag</td><td>WAL shipping delay</td><td>Asynchronous streaming / slots</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="8-configuration-tuning--monitoring"><a class="header" href="#8-configuration-tuning--monitoring">8. Configuration, Tuning &amp; Monitoring</a></h2>
+<p>PostgreSQL exposes many WAL-related parameters in <code>postgresql.conf</code> (<a href="https://www.postgresql.org/docs/current/runtime-config-wal.html">docs</a>):</p>
+<div class="table-wrapper"><table><thead><tr><th>Setting</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>wal_level</code></td><td>Controls WAL detail: <code>minimal</code>, <code>replica</code>, <code>logical</code>.</td></tr>
+<tr><td><code>synchronous_commit</code></td><td>Determines when commit waits for WAL flush.</td></tr>
+<tr><td><code>checkpoint_timeout</code></td><td>Maximum time between checkpoints.</td></tr>
+<tr><td><code>checkpoint_completion_target</code></td><td>Fraction of interval used to spread writes.</td></tr>
+<tr><td><code>max_wal_size</code> / <code>min_wal_size</code></td><td>Controls recycling/archiving thresholds.</td></tr>
+<tr><td><code>archive_mode</code> / <code>archive_command</code></td><td>Enables continuous archiving.</td></tr>
+</tbody></table>
+</div>
+<p>Monitoring views:</p>
+<pre><code class="language-sql">SELECT * FROM pg_stat_bgwriter;
+SELECT * FROM pg_stat_wal;
+</code></pre>
+<hr />
+<h2 id="9-summary--takeaways"><a class="header" href="#9-summary--takeaways">9. Summary &amp; Takeaways</a></h2>
+<p>PostgreSQL’s WAL system embodies the purest form of write-ahead logging found in any production database:</p>
+<ul>
+<li><strong>Strict ordering:</strong> Every modification is logged before it reaches disk.</li>
+<li><strong>Cooperative background processes:</strong> WAL Writer, Checkpointer, and Archiver work in concert.</li>
+<li><strong>LSN-based recovery:</strong> Pages and WAL are stitched together by LSNs for deterministic replay.</li>
+<li><strong>Unified mechanism:</strong> The same WAL supports crash recovery, replication, and point-in-time restoration.</li>
+</ul>
+<p>For readers exploring the codebase:</p>
+<ul>
+<li><code>src/backend/access/transam/xlog.c</code> – core WAL insert &amp; flush logic</li>
+<li><code>walwriter.c</code> – background writer loop</li>
+<li><code>xlogrecovery.c</code> – recovery and redo routines</li>
+<li><code>rmgr.c</code> + <code>src/backend/access/rmgr/</code> – resource-manager redo handlers</li>
+</ul>
+<hr />
+<h2 id="10-reflection-and-comparison-template"><a class="header" href="#10-reflection-and-comparison-template">10. Reflection and Comparison Template</a></h2>
+<p>This section acts as a <strong>bridge</strong> for upcoming chapters (SQLite, InnoDB, RocksDB, LMDB).
+You can reuse the same structure to compare how each system:</p>
+<ol>
+<li>Defines log records and sequence numbers</li>
+<li>Handles concurrency and flushing</li>
+<li>Implements checkpoints or compaction</li>
+<li>Replays logs during recovery</li>
+<li>Balances performance vs. durability</li>
+</ol>
+<p>For PostgreSQL, the guiding philosophy is clarity over cleverness-every change flows through a linear, append-only stream, and every byte written can be traced by its LSN.</p>
+<hr />
+<p><strong>Further Reading</strong></p>
+<ul>
+<li><a href="https://www.postgresql.org/docs/current/wal-internals.html">PostgreSQL WAL Internals (official)</a></li>
+<li><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/transam/xlog.c">PostgreSQL Source: <code>xlog.c</code></a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="part3_real_world.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="ch10_sqlite.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="part3_real_world.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="ch10_sqlite.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
